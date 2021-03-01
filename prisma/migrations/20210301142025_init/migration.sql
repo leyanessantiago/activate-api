@@ -1,20 +1,20 @@
 -- CreateTable
 CREATE TABLE "User" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "userName" VARCHAR(255) NOT NULL,
     "email" TEXT NOT NULL,
     "name" VARCHAR(255) NOT NULL,
     "lastName" VARCHAR(255) NOT NULL,
     "password" TEXT NOT NULL,
     "isPublisher" BOOLEAN NOT NULL DEFAULT false,
-    "userId" INTEGER,
+    "userId" TEXT,
 
     PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Category" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" VARCHAR(255) NOT NULL,
 
     PRIMARY KEY ("id")
@@ -22,50 +22,50 @@ CREATE TABLE "Category" (
 
 -- CreateTable
 CREATE TABLE "Event" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "name" VARCHAR(255) NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
     "address" TEXT NOT NULL,
     "description" TEXT,
     "image" TEXT,
-    "categoryId" INTEGER NOT NULL,
-    "authorId" INTEGER NOT NULL,
+    "categoryId" TEXT NOT NULL,
+    "authorId" TEXT NOT NULL,
 
     PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Comment" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
     "content" TEXT NOT NULL,
     "response" TEXT,
-    "authorId" INTEGER NOT NULL,
-    "eventId" INTEGER NOT NULL,
+    "authorId" TEXT NOT NULL,
+    "eventId" TEXT NOT NULL,
 
     PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Activity" (
-    "id" SERIAL NOT NULL,
+    "id" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "content" TEXT NOT NULL,
-    "userId" INTEGER NOT NULL,
+    "userId" TEXT NOT NULL,
 
     PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "_UserFollows" (
-    "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
 );
 
 -- CreateTable
 CREATE TABLE "_EventFollowers" (
-    "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL
+    "A" TEXT NOT NULL,
+    "B" TEXT NOT NULL
 );
 
 -- CreateIndex
