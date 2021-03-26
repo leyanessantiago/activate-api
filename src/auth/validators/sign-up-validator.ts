@@ -5,7 +5,7 @@ import { SignUpDto } from '../dto/sign-up.dto';
 import  * as util  from '../../core/utils/utilities';
 
 @Injectable()
-export class SigUpValidationPipe extends AbstractValidator<SignUpDto> {
+export class SignUpValidationPipe extends AbstractValidator<SignUpDto> {
 
     constructor(private userServices: UserService) {
         super();

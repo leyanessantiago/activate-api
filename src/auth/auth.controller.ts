@@ -2,7 +2,7 @@ import { Controller, Post, Body, UsePipes, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { response } from 'express';
-import { SigUpValidationPipe } from './validators/sign-up-validator';
+import { SignUpValidationPipe } from './validators/sign-up-validator';
 import { UserInfo } from './models/user-info';
 import { SimpleResponse } from 'src/core/responses/simple-response';
 import { ApiException } from 'src/core/exceptions/api-exception';
@@ -14,7 +14,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
-  @UsePipes(SigUpValidationPipe)
+  @UsePipes(SignUpValidationPipe)
   async signUp(@Body() signUp: SignUpDto): Promise<SimpleResponse<UserInfo>> {
       const user = await this.authService.signUp(signUp);
       
