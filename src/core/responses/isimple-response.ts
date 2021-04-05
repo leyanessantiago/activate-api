@@ -1,3 +1,3 @@
 export interface ISimpleResponse<T> {
-    data: T;
+  data: T;
 }
