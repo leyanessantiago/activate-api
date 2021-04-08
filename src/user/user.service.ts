@@ -1,30 +1,83 @@
 import { Injectable } from '@nestjs/common';
-import { User, Prisma } from '@prisma/client';
+import { User, Prisma, Follower, Publisher } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UserService {
-    constructor(private prismaService: PrismaService) {}
+  constructor(private prismaService: PrismaService) {}
 
-    async findByEmail(email: string): Promise<User | undefined> {
-        return this.prismaService.user.findUnique({
-            where: {
-                email: email
-            }
-        });
+  async findByEmail(email: string): Promise<User | undefined> {
+    return this.prismaService.user.findUnique({
+      where: {
+        email: email,
+      },
+    });
+  }
+
+  async findByUserName(userName: string): Promise<User | undefined> {
+    return this.prismaService.user.findUnique({
+      where: {
+        userName: userName,
+      },
+    });
+  }
+
+  async findFriends(id: string): Promise<Follower[]> {
+    const follower = await this.prismaService.follower.findUnique({
+      where: {
+        userId: id,
+      },
+      include: {
+        friends: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (follower === null) {
+      return new Array<Follower>();
     }
 
-    async findByUserName(userName: string): Promise<User | undefined> {
-        return this.prismaService.user.findUnique({
-            where: {
-                userName: userName
-            }
-        });
+    return follower.friends;
+  }
+
+  async findPublishers(id: string): Promise<Publisher[]> {
+    const follower = await this.prismaService.follower.findUnique({
+      where: {
+        userId: id,
+      },
+      include: {
+        following: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (follower === null) {
+      return new Array<Publisher>();
     }
 
-    async create(userCreate: Prisma.UserCreateInput): Promise<User | null> {
-        return this.prismaService.user.create({
-            data: userCreate
-        });
-    }
+    return follower.following;
+  }
+
+  async create(userCreate: Prisma.UserCreateInput): Promise<User | null> {
+    return await this.prismaService.user.create({
+      data: userCreate,
+    });
+  }
+
+  async createFollower(
+    follower: Prisma.FollowerCreateInput,
+  ): Promise<(Follower & { user: User }) | null> {
+    return await this.prismaService.follower.create({
+      data: follower,
+      include: {
+        user: true,
+      },
+    });
+  }
 }
