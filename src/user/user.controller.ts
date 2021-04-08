@@ -1,10 +1,10 @@
 import { Controller, Get, Param, UseGuards, HttpStatus } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Follower, Publisher } from '.prisma/client';
-import { UserInfo } from 'src/auth/models/user-info';
-import { SimpleResponse } from 'src/core/responses/simple-response';
+import { UserInfo } from '../auth/models/user-info';
+import { SimpleResponse } from '../core/responses/simple-response';
 import { response } from 'express';
-import { CurrentUser } from 'src/core/jwt/current-user.decorator';
+import { CurrentUser } from '../core/jwt/current-user.decorator';
 
 @Controller('users')
 export class UserController {
