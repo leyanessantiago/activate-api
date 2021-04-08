@@ -1,16 +1,15 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { UserModule } from 'src/user/user.module';
-import { UserService } from 'src/user/user.service';
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { UserModule } from '../user/user.module';
+import { UserService } from '../user/user.service';
+import { PrismaModule } from '../prisma/prisma.module';
 import { SignUpValidationPipe } from './validators/sign-up-validator';
 import { JwtModule } from '@nestjs/jwt';
 import { LoginValidator } from './validators/login-validator';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { JwtStrategy } from '../core/jwt/jwt.startegy';
 import { JwtAuthGuard } from '../core/jwt/jwt.guard';
-import { AppModule } from 'src/app.module';
 
 @Module({
   imports: [
@@ -28,9 +27,7 @@ import { AppModule } from 'src/app.module';
     PrismaService,
     SignUpValidationPipe,
     LoginValidator,
-    /*  JwtStrategy,
-    JwtAuthGuard,*/
   ],
-  exports: [JwtModule, AuthService /*JwtStrategy, JwtAuthGuard*/],
+  exports: [AuthService],
 })
 export class AuthModule {}

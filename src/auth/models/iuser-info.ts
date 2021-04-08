@@ -1,5 +1,5 @@
 export interface IUserInfo {
-    sub:             string;
-    email:          string;
-    accessToken:    string;
+  sub: string;
+  email: string;
+  accessToken: string;
 }

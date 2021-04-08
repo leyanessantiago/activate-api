@@ -4,11 +4,11 @@ import { SignUpDto } from './dto/sign-up.dto';
 import { response } from 'express';
 import { SignUpValidationPipe } from './validators/sign-up-validator';
 import { UserInfo } from './models/user-info';
-import { SimpleResponse } from 'src/core/responses/simple-response';
-import { ApiException } from 'src/core/exceptions/api-exception';
+import { SimpleResponse } from '../core/responses/simple-response';
+import { ApiException } from '../core/exceptions/api-exception';
 import { LoginDto } from './dto/login.dto';
 import { LoginValidator } from './validators/login-validator';
-import { Public } from 'src/core/jwt/public.decorator';
+import { Public } from '../core/jwt/public.decorator';
 
 @Controller('auth')
 export class AuthController {
