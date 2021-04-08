@@ -9,46 +9,50 @@ import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-    private salt = 10;
+  private salt = 10;
 
-    constructor(private userService: UserService,
-                private jwtService: JwtService){}
+  constructor(
+    private userService: UserService,
+    private jwtService: JwtService,
+  ) {}
 
-    async signUp(signUp: SignUpDto): Promise<User | null> {
-        const passowrdHash = await bcrypt.hash(signUp.password, this.salt);
+  async signUp(signUp: SignUpDto): Promise<User | null> {
+    const passowrdHash = await bcrypt.hash(signUp.password, this.salt);
+    const followerInput: Prisma.FollowerCreateInput = {
+      user: {
+        create: {
+          email: signUp.email,
+          name: signUp.name,
+          lastName: signUp.lastName,
+          password: passowrdHash,
+          userName: signUp.userName,
+        },
+      },
+    };
+    const follower = await this.userService.createFollower(followerInput);
 
-        const userInput: Prisma.UserCreateInput = {
-            email:      signUp.email,
-            name:       signUp.name,
-            lastName:   signUp.lastName,
-            password:   passowrdHash,
-            userName:   signUp.userName
-        };
+    return follower.user;
+  }
 
-        return await this.userService.create(userInput);
-    } 
+  async login(login: LoginDto): Promise<UserInfo | null> {
+    const user = await this.userService.findByEmail(login.email);
 
-    async login(login: LoginDto): Promise<UserInfo | null> {
-        const user = await this.userService.findByEmail(login.email);
+    if (user === null) return null;
 
-        if (user === null)
-            return null;
+    const isMatch = await bcrypt.compare(login.password, user.password);
+    if (isMatch) return this.getUserInfo(user);
 
-        const isMatch = await bcrypt.compare(login.password, user.password);
-        if (isMatch)        
-            return this.getUserInfo(user);
+    return null;
+  }
 
-        return null;
-    }
+  getUserInfo(user: User): UserInfo {
+    const payload = { email: user.email, sub: user.id };
+    const token = this.jwtService.sign(payload);
 
-    getUserInfo(user: User): UserInfo {
-        const payload = { email: user.email, sub: user.id };
-        const token = this.jwtService.sign(payload);
-    
-        return new UserInfo({
-            id: user.id,
-            email: user.email,
-            accessToken: token
-        });
-      }
+    return new UserInfo({
+      sub: user.id,
+      email: user.email,
+      accessToken: token,
+    });
+  }
 }

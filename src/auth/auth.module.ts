@@ -8,27 +8,29 @@ import { SignUpValidationPipe } from './validators/sign-up-validator';
 import { JwtModule } from '@nestjs/jwt';
 import { LoginValidator } from './validators/login-validator';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { JwtStrategy } from './jwt/jwt.startegy';
-import { JwtAuthGuard } from './jwt/jwt.guard';
+import { JwtStrategy } from '../core/jwt/jwt.startegy';
+import { JwtAuthGuard } from '../core/jwt/jwt.guard';
+import { AppModule } from 'src/app.module';
 
 @Module({
-  imports: [forwardRef(() => UserModule),
-            PrismaModule,
-            JwtModule.register({
-              secret: process.env['JWT_SECRET'],
-              signOptions: { expiresIn: '8640s' },
-            })],
+  imports: [
+    UserModule,
+    PrismaModule,
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'],
+      signOptions: { expiresIn: '8640s' },
+    }),
+  ],
   controllers: [AuthController],
-  providers: [AuthService,
-              UserService,
-              PrismaService,
-              SignUpValidationPipe,
-              LoginValidator,
-              JwtStrategy,
-              JwtAuthGuard],
-  exports: [JwtModule,
-            AuthService,
-            JwtStrategy, 
-            JwtAuthGuard]
+  providers: [
+    AuthService,
+    UserService,
+    PrismaService,
+    SignUpValidationPipe,
+    LoginValidator,
+    /*  JwtStrategy,
+    JwtAuthGuard,*/
+  ],
+  exports: [JwtModule, AuthService /*JwtStrategy, JwtAuthGuard*/],
 })
 export class AuthModule {}

@@ -8,6 +8,7 @@ import { SimpleResponse } from 'src/core/responses/simple-response';
 import { ApiException } from 'src/core/exceptions/api-exception';
 import { LoginDto } from './dto/login.dto';
 import { LoginValidator } from './validators/login-validator';
+import { Public } from 'src/core/jwt/public.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -15,26 +16,36 @@ export class AuthController {
 
   @Post('signup')
   @UsePipes(SignUpValidationPipe)
+  @Public()
   async signUp(@Body() signUp: SignUpDto): Promise<SimpleResponse<UserInfo>> {
-      const user = await this.authService.signUp(signUp);
-      
-      if (user !== null) {
-        response.status(HttpStatus.OK);
+    const user = await this.authService.signUp(signUp);
 
-        return new SimpleResponse<UserInfo>({data: this.authService.getUserInfo(user)});
-      }
+    if (user !== null) {
+      response.status(HttpStatus.OK);
 
-      throw new ApiException(HttpStatus.BAD_REQUEST, 'Error creating the account, please try later.');
+      return new SimpleResponse<UserInfo>({
+        data: this.authService.getUserInfo(user),
+      });
+    }
+
+    throw new ApiException(
+      HttpStatus.BAD_REQUEST,
+      'Error creating the account, please try later.',
+    );
   }
 
   @Post('login')
   @UsePipes(LoginValidator)
+  @Public()
   async login(@Body() login: LoginDto): Promise<SimpleResponse<UserInfo>> {
-      const userInfo = await this.authService.login(login);
+    const userInfo = await this.authService.login(login);
 
-      if (userInfo !== null)
-        return new SimpleResponse<UserInfo>({data: userInfo});
+    if (userInfo !== null)
+      return new SimpleResponse<UserInfo>({ data: userInfo });
 
-      throw new ApiException(HttpStatus.BAD_REQUEST, 'Email or password invalid, please try again.');
+    throw new ApiException(
+      HttpStatus.BAD_REQUEST,
+      'Email or password incorrect, please try again.',
+    );
   }
 }
