@@ -37,7 +37,7 @@ export class UserController {
     return new SimpleResponse<Publisher[]>({ data: publishers });
   }
 
-  @Get('publishers')
+  @Get('publishers/:id')
   async getPublishersById(
     @Param('id') id: string,
   ): Promise<SimpleResponse<Publisher[]>> {
