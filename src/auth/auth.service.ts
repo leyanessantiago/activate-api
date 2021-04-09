@@ -18,16 +18,20 @@ export class AuthService {
 
   async signUp(signUp: SignUpDto): Promise<User | null> {
     const passowrdHash = await bcrypt.hash(signUp.password, this.salt);
-
-    const userInput: Prisma.UserCreateInput = {
-      email: signUp.email,
-      name: signUp.name,
-      lastName: signUp.lastName,
-      password: passowrdHash,
-      userName: signUp.userName,
+    const followerInput: Prisma.FollowerCreateInput = {
+      user: {
+        create: {
+          email: signUp.email,
+          name: signUp.name,
+          lastName: signUp.lastName,
+          password: passowrdHash,
+          userName: signUp.userName,
+        },
+      },
     };
+    const follower = await this.userService.createFollower(followerInput);
 
-    return await this.userService.create(userInput);
+    return follower.user;
   }
 
   async login(login: LoginDto): Promise<UserInfo | null> {
@@ -46,7 +50,7 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
 
     return new UserInfo({
-      id: user.id,
+      sub: user.id,
       email: user.email,
       accessToken: token,
     });

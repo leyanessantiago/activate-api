@@ -8,6 +8,7 @@ import { SimpleResponse } from '../core/responses/simple-response';
 import { ApiException } from '../core/exceptions/api-exception';
 import { LoginDto } from './dto/login.dto';
 import { LoginValidator } from './validators/login-validator';
+import { Public } from '../core/jwt/public.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -15,6 +16,7 @@ export class AuthController {
 
   @Post('signup')
   @UsePipes(SignUpValidationPipe)
+  @Public()
   async signUp(@Body() signUp: SignUpDto): Promise<SimpleResponse<UserInfo>> {
     const user = await this.authService.signUp(signUp);
 
@@ -34,6 +36,7 @@ export class AuthController {
 
   @Post('login')
   @UsePipes(LoginValidator)
+  @Public()
   async login(@Body() login: LoginDto): Promise<SimpleResponse<UserInfo>> {
     const userInfo = await this.authService.login(login);
 
@@ -42,7 +45,7 @@ export class AuthController {
 
     throw new ApiException(
       HttpStatus.BAD_REQUEST,
-      'Email or password invalid, please try again.',
+      'Email or password incorrect, please try again.',
     );
   }
 }

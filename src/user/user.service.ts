@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User, Prisma } from '@prisma/client';
+import { User, Prisma, Follower, Publisher } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -22,9 +22,62 @@ export class UserService {
     });
   }
 
+  async findFriends(id: string): Promise<Follower[]> {
+    const follower = await this.prismaService.follower.findUnique({
+      where: {
+        userId: id,
+      },
+      include: {
+        friends: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (follower === null) {
+      return new Array<Follower>();
+    }
+
+    return follower.friends;
+  }
+
+  async findPublishers(id: string): Promise<Publisher[]> {
+    const follower = await this.prismaService.follower.findUnique({
+      where: {
+        userId: id,
+      },
+      include: {
+        following: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (follower === null) {
+      return new Array<Publisher>();
+    }
+
+    return follower.following;
+  }
+
   async create(userCreate: Prisma.UserCreateInput): Promise<User | null> {
-    return this.prismaService.user.create({
+    return await this.prismaService.user.create({
       data: userCreate,
+    });
+  }
+
+  async createFollower(
+    follower: Prisma.FollowerCreateInput,
+  ): Promise<(Follower & { user: User }) | null> {
+    return await this.prismaService.follower.create({
+      data: follower,
+      include: {
+        user: true,
+      },
     });
   }
 }

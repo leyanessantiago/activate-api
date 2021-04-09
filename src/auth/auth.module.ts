@@ -8,12 +8,12 @@ import { SignUpValidationPipe } from './validators/sign-up-validator';
 import { JwtModule } from '@nestjs/jwt';
 import { LoginValidator } from './validators/login-validator';
 import { PrismaService } from '../prisma/prisma.service';
-import { JwtStrategy } from './jwt/jwt.startegy';
-import { JwtAuthGuard } from './jwt/jwt.guard';
+import { JwtStrategy } from '../core/jwt/jwt.startegy';
+import { JwtAuthGuard } from '../core/jwt/jwt.guard';
 
 @Module({
   imports: [
-    forwardRef(() => UserModule),
+    UserModule,
     PrismaModule,
     JwtModule.register({
       secret: process.env['JWT_SECRET'],
@@ -27,9 +27,7 @@ import { JwtAuthGuard } from './jwt/jwt.guard';
     PrismaService,
     SignUpValidationPipe,
     LoginValidator,
-    JwtStrategy,
-    JwtAuthGuard,
   ],
-  exports: [JwtModule, AuthService, JwtStrategy, JwtAuthGuard],
+  exports: [AuthService],
 })
 export class AuthModule {}
