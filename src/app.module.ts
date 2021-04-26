@@ -1,18 +1,26 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtAuthGuard } from './core/jwt/jwt.guard';
 import { JwtStrategy } from './core/jwt/jwt.startegy';
 import { EventModule } from './event/event.module';
+import { RateLimiterModule, RateLimiterInterceptor } from 'nestjs-rate-limiter';
+import RateLimiterConfiguration from './core/constants/rate-limiter-configuration';
 
 @Module({
-  imports: [UserModule, AuthModule, EventModule],
-  controllers: [AppController],
+  imports: [
+    UserModule,
+    AuthModule,
+    EventModule,
+    RateLimiterModule.register(RateLimiterConfiguration),
+  ],
+  controllers: [],
   providers: [
-    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RateLimiterInterceptor,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

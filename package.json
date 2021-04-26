@@ -38,6 +38,7 @@
     "@nestjs/platform-express": "^7.5.1",
     "@prisma/client": "^2.17.0",
     "bcrypt": "^5.0.1",
+    "nestjs-rate-limiter": "^2.7.1",
     "passport": "^0.4.1",
     "passport-jwt": "^4.0.0",
     "reflect-metadata": "^0.1.13",

@@ -32,7 +32,7 @@ export class ExceptionsFilter implements ExceptionFilter {
       const errorMessage =
         status === HttpStatus.INTERNAL_SERVER_ERROR
           ? 'Oops something went wrong, please try later.'
-          : exception.response.message;
+          : exception.response.message || exception.message;
 
       response.status(status).json(ApiResponse.Fail(status, errorMessage));
     }

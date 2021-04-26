@@ -14,13 +14,16 @@ export class SignUpValidationPipe extends AbstractValidator<SignUpDto> {
     if (util.stringUndefinedOrNullOrEmpty(value.email))
       this.setValidationError('email', 'The email can not be empty.');
 
-    await this.checkUniqueEmail(value.email);
-    this.validEmail(value.email);
+    if (!util.stringUndefinedOrNullOrEmpty(value.email)) {
+      await this.checkUniqueEmail(value.email);
+      this.validEmail(value.email);
+    }
 
     if (util.stringUndefinedOrNullOrEmpty(value.userName))
       this.setValidationError('userName', 'The user name can not be empty.');
 
-    await this.checkUniqueUserName(value.userName);
+    if (!util.stringUndefinedOrNullOrEmpty(value.userName))
+      await this.checkUniqueUserName(value.userName);
   }
 
   private async checkUniqueEmail(email: string): Promise<void> {
