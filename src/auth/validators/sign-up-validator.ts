@@ -18,12 +18,6 @@ export class SignUpValidationPipe extends AbstractValidator<SignUpDto> {
       await this.checkUniqueEmail(value.email);
       this.validEmail(value.email);
     }
-
-    if (util.stringUndefinedOrNullOrEmpty(value.userName))
-      this.setValidationError('userName', 'The user name can not be empty.');
-
-    if (!util.stringUndefinedOrNullOrEmpty(value.userName))
-      await this.checkUniqueUserName(value.userName);
   }
 
   private async checkUniqueEmail(email: string): Promise<void> {
@@ -31,16 +25,6 @@ export class SignUpValidationPipe extends AbstractValidator<SignUpDto> {
 
     if (user !== null)
       this.setValidationError('email', 'This email is currently in use.');
-  }
-
-  private async checkUniqueUserName(userName: string) {
-    const user = await this.userServices.findByUserName(userName);
-
-    if (user !== null)
-      this.setValidationError(
-        'userName',
-        'This user name is currently in use.',
-      );
   }
 
   private async validEmail(email: string) {
