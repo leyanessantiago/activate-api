@@ -64,6 +64,14 @@ export class UserService {
     return follower.following;
   }
 
+  async findById(id: string): Promise<User> {
+    return await this.prismaService.user.findUnique({
+      where: {
+        id: id,
+      },
+    });
+  }
+
   async create(userCreate: Prisma.UserCreateInput): Promise<User | null> {
     return await this.prismaService.user.create({
       data: userCreate,
@@ -77,6 +85,15 @@ export class UserService {
       data: follower,
       include: {
         user: true,
+      },
+    });
+  }
+
+  async update(id: string, user: Prisma.UserUpdateInput): Promise<User> {
+    return await this.prismaService.user.update({
+      data: user,
+      where: {
+        id: id,
       },
     });
   }
