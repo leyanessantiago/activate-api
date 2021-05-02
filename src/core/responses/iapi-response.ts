@@ -1,7 +1,7 @@
 import { Dictionary } from 'express-serve-static-core';
 
 export interface IApiResponse {
-  success: boolean;
+  errorType?: 'error' | 'validation';
   errorMessage?: string;
   message?: string;
   statusCode: number;
