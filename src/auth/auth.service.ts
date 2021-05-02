@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
 import { UserInfo } from './models/user-info';
 import { JwtService } from '@nestjs/jwt';
-import { ApiException } from 'src/core/exceptions/api-exception';
+import { ApiException } from '../core/exceptions/api-exception';
 import { VerifyDto } from './dto/verify.dto';
 
 @Injectable()
