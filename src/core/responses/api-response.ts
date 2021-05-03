@@ -2,7 +2,7 @@ import { IApiResponse } from './iapi-response';
 import { Dictionary } from 'express-serve-static-core';
 
 export class ApiResponse {
-  success: boolean;
+  errorType: string;
   errorMessage: string;
   successMessage: string;
   statusCode: number;
@@ -10,7 +10,7 @@ export class ApiResponse {
   validationErros: Dictionary<Array<string>>;
 
   constructor(apiResponse: IApiResponse) {
-    this.success = apiResponse.success;
+    this.errorType = apiResponse.errorType;
     this.errorMessage = apiResponse.errorMessage;
     this.successMessage = apiResponse.message;
     this.statusCode = apiResponse.statusCode;
@@ -20,7 +20,6 @@ export class ApiResponse {
 
   static Success(statusCode: number, successMessage: string): ApiResponse {
     return new ApiResponse({
-      success: true,
       statusCode: statusCode,
       message: successMessage,
     });
@@ -28,7 +27,7 @@ export class ApiResponse {
 
   static Fail(statusCode: number, errorMessage: string): ApiResponse {
     return new ApiResponse({
-      success: false,
+      errorType: 'error',
       statusCode: statusCode,
       errorMessage: errorMessage,
     });
@@ -38,7 +37,7 @@ export class ApiResponse {
     validationErrors: Dictionary<Array<string>>,
   ): ApiResponse {
     return new ApiResponse({
-      success: false,
+      errorType: 'validation',
       statusCode: 400,
       validationErrors: validationErrors,
     });

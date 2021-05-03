@@ -11,30 +11,33 @@ generator client {
 }
 
 model User {
-	id				String	@id		@default(uuid())
-	userName		String	@unique @db.VarChar(255)
-	email			String	@unique
-	name			String	@db.VarChar(255)
-	lastName		String	@db.VarChar(255)
-	password		String
-	publisher		Publisher?
-	follower		Follower?
+	id				      String	@id		@default(uuid())
+	userName		    String?	@unique @db.VarChar(255)
+	email			      String	@unique
+	name			      String?	@db.VarChar(255)
+	lastName		    String?	@db.VarChar(255)
+	password		    String
+	publisher		    Publisher?
+	follower		    Follower?
+  isVerified      Boolean @default(false)
+  verficationCode String?
+  avatarUrl       String?
 }
 
 model Publisher {
-	events		Event[]		@relation(name: "EventAuthor")
-	followedBy	Follower[]	@relation("PublisherFollows", references: [userId])	
-	user		User		@relation(fields: [userId], references: [id])
-	userId		String		@id
+	events		  Event[]		@relation(name: "EventAuthor")
+	followedBy	Follower[]	@relation("PublisherFollows", references: [userId])
+	user		    User		@relation(fields: [userId], references: [id])
+	userId		  String		@id
 }
 
 model Follower {
-	following		Publisher[]	@relation("PublisherFollows", references: [userId])
-	friends			Follower[]	@relation(name: "FriendShip")
-	friendOf		Follower[]	@relation(name: "FriendShip")
+	following		    Publisher[]	@relation("PublisherFollows", references: [userId])
+	friends			    Follower[]	@relation(name: "FriendShip")
+	friendOf		    Follower[]	@relation(name: "FriendShip")
 	eventsFollowed	Event[]		@relation(name: "EventFollowers")
-	user			User		@relation(fields: [userId], references: [id])
-	userId			String		@id
+	user			      User		@relation(fields: [userId], references: [id])
+	userId			    String		@id
 }
 
 model Category {
@@ -43,10 +46,10 @@ model Category {
 }
 
 model Event {
-	id			String		@id					@default(uuid())
-	name		String		@db.VarChar(255)
-	date		DateTime
-	address		String
+	id			    String		@id					@default(uuid())
+	name		    String		@db.VarChar(255)
+	date		    DateTime
+	address		  String
 	description	String?
 	image		String?
 	category	Category	@relation(fields: [categoryId], references: [id])

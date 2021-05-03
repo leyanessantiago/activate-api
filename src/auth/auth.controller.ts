@@ -9,6 +9,7 @@ import { ApiException } from '../core/exceptions/api-exception';
 import { LoginDto } from './dto/login.dto';
 import { LoginValidator } from './validators/login-validator';
 import { Public } from '../core/jwt/public.decorator';
+import { VerifyDto } from './dto/verify.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -47,5 +48,15 @@ export class AuthController {
       HttpStatus.BAD_REQUEST,
       'Email or password incorrect, please try again.',
     );
+  }
+
+  @Post('verify')
+  @Public()
+  async verify(@Body() verify: VerifyDto): Promise<SimpleResponse<UserInfo>> {
+    const user = await this.authService.verifyUser(verify);
+
+    if (user !== null) return new SimpleResponse<UserInfo>({ data: user });
+
+    throw new ApiException(HttpStatus.BAD_REQUEST, 'User can not be verified.');
   }
 }

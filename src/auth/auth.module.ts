@@ -8,8 +8,6 @@ import { SignUpValidationPipe } from './validators/sign-up-validator';
 import { JwtModule } from '@nestjs/jwt';
 import { LoginValidator } from './validators/login-validator';
 import { PrismaService } from '../prisma/prisma.service';
-import { JwtStrategy } from '../core/jwt/jwt.startegy';
-import { JwtAuthGuard } from '../core/jwt/jwt.guard';
 
 @Module({
   imports: [
