@@ -1,9 +1,8 @@
-import { Controller, Get, Param, UseGuards, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { UserService } from './user.service';
 import { Follower, Publisher } from '.prisma/client';
 import { UserInfo } from '../auth/models/user-info';
 import { SimpleResponse } from '../core/responses/simple-response';
-import { response } from 'express';
 import { CurrentUser } from '../core/jwt/current-user.decorator';
 
 @Controller('users')
@@ -15,7 +14,6 @@ export class UserController {
     @CurrentUser() user: UserInfo,
   ): Promise<SimpleResponse<Follower[]>> {
     const friends = await this.userService.findFriends(user.sub);
-    response.status(HttpStatus.OK);
     return new SimpleResponse<Follower[]>({ data: friends });
   }
 
@@ -24,7 +22,6 @@ export class UserController {
     @Param('id') id: string,
   ): Promise<SimpleResponse<Follower[]>> {
     const friends = await this.userService.findFriends(id);
-    response.status(HttpStatus.OK);
     return new SimpleResponse<Follower[]>({ data: friends });
   }
 
@@ -33,7 +30,6 @@ export class UserController {
     @CurrentUser() user: UserInfo,
   ): Promise<SimpleResponse<Publisher[]>> {
     const publishers = await this.userService.findPublishers(user.sub);
-    response.status(HttpStatus.OK);
     return new SimpleResponse<Publisher[]>({ data: publishers });
   }
 
@@ -42,7 +38,6 @@ export class UserController {
     @Param('id') id: string,
   ): Promise<SimpleResponse<Publisher[]>> {
     const publishers = await this.userService.findPublishers(id);
-    response.status(HttpStatus.OK);
     return new SimpleResponse<Publisher[]>({ data: publishers });
   }
 }

@@ -1,15 +1,22 @@
-import { Controller, Post, Body, UsePipes, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UsePipes,
+  HttpStatus,
+  Patch,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { response } from 'express';
 import { SignUpValidationPipe } from './validators/sign-up-validator';
 import { UserInfo } from './models/user-info';
-import { SimpleResponse } from '../core/responses/simple-response';
 import { ApiException } from '../core/exceptions/api-exception';
 import { LoginDto } from './dto/login.dto';
 import { LoginValidator } from './validators/login-validator';
 import { Public } from '../core/jwt/public.decorator';
 import { VerifyDto } from './dto/verify.dto';
+import { CurrentUser } from 'src/core/jwt/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -18,15 +25,11 @@ export class AuthController {
   @Post('signup')
   @UsePipes(SignUpValidationPipe)
   @Public()
-  async signUp(@Body() signUp: SignUpDto): Promise<SimpleResponse<UserInfo>> {
+  async signUp(@Body() signUp: SignUpDto): Promise<UserInfo> {
     const user = await this.authService.signUp(signUp);
 
     if (user !== null) {
-      response.status(HttpStatus.OK);
-
-      return new SimpleResponse<UserInfo>({
-        data: this.authService.getUserInfo(user),
-      });
+      return user;
     }
 
     throw new ApiException(
@@ -38,25 +41,44 @@ export class AuthController {
   @Post('login')
   @UsePipes(LoginValidator)
   @Public()
-  async login(@Body() login: LoginDto): Promise<SimpleResponse<UserInfo>> {
+  async login(@Body() login: LoginDto): Promise<UserInfo> {
     const userInfo = await this.authService.login(login);
 
-    if (userInfo !== null)
-      return new SimpleResponse<UserInfo>({ data: userInfo });
+    if (userInfo !== null) return userInfo;
 
     throw new ApiException(
       HttpStatus.BAD_REQUEST,
-      'Email or password incorrect, please try again.',
+      'Email or password are incorrect, please try again.',
     );
   }
 
-  @Post('verify')
-  @Public()
-  async verify(@Body() verify: VerifyDto): Promise<SimpleResponse<UserInfo>> {
-    const user = await this.authService.verifyUser(verify);
+  @Patch('verify')
+  async verify(
+    @CurrentUser() currentUser: UserInfo,
+    @Body() verify: VerifyDto,
+  ): Promise<UserInfo> {
+    const user = await this.authService.verifyUser(currentUser.sub, verify);
 
-    if (user !== null) return new SimpleResponse<UserInfo>({ data: user });
+    if (user) return user;
 
     throw new ApiException(HttpStatus.BAD_REQUEST, 'User can not be verified.');
+  }
+
+  @Patch('profile')
+  async updateProfile(
+    @CurrentUser() currentUser: UserInfo,
+    @Body() profileData,
+  ): Promise<UserInfo> {
+    const user = await this.authService.updateProfile(
+      currentUser.sub,
+      profileData,
+    );
+
+    if (user) return user;
+
+    throw new ApiException(
+      HttpStatus.BAD_REQUEST,
+      'User profile can not be updated.',
+    );
   }
 }

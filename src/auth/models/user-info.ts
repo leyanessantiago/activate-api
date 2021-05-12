@@ -6,7 +6,7 @@ export class UserInfo {
   userName: string;
   fullName: string;
   avatarUrl: string;
-  isVerified: boolean;
+  verificationLevel: number;
   accessToken: string;
 
   constructor(userInfo: IUserInfo) {
@@ -15,7 +15,7 @@ export class UserInfo {
     this.fullName = userInfo.fullName;
     this.userName = userInfo.userName;
     this.avatarUrl = userInfo.avatarUrl;
-    this.isVerified = userInfo.isVerified;
+    this.verificationLevel = userInfo.verificationLevel;
     this.accessToken = userInfo.accessToken;
   }
 }
