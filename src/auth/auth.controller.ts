@@ -1,22 +1,27 @@
 import {
-  Controller,
-  Post,
   Body,
-  UsePipes,
+  Controller,
   HttpStatus,
   Patch,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+  UsePipes,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { SignUpDto } from './dto/sign-up.dto';
-import { response } from 'express';
-import { SignUpValidationPipe } from './validators/sign-up-validator';
-import { UserInfo } from './models/user-info';
-import { ApiException } from '../core/exceptions/api-exception';
-import { LoginDto } from './dto/login.dto';
-import { LoginValidator } from './validators/login-validator';
-import { Public } from '../core/jwt/public.decorator';
-import { VerifyDto } from './dto/verify.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { imageFilter, renameImageFile } from 'src/helpers/file-upload';
+import { Public } from 'src/core/jwt/public.decorator';
 import { CurrentUser } from 'src/core/jwt/current-user.decorator';
+import { ApiException } from 'src/core/exceptions/api-exception';
+import { SignUpDto } from './dto/sign-up.dto';
+import { LoginDto } from './dto/login.dto';
+import { VerifyDto } from './dto/verify.dto';
+import { UserInfo } from './models/user-info';
+import { AuthService } from './auth.service';
+import { SignUpValidationPipe } from './validators/sign-up-validator';
+import { LoginValidator } from './validators/login-validator';
+import { ProfileDto } from './dto/profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -67,11 +72,38 @@ export class AuthController {
   @Patch('profile')
   async updateProfile(
     @CurrentUser() currentUser: UserInfo,
-    @Body() profileData,
+    @Body() profileData: ProfileDto,
   ): Promise<UserInfo> {
     const user = await this.authService.updateProfile(
       currentUser.sub,
       profileData,
+    );
+
+    if (user) return user;
+
+    throw new ApiException(
+      HttpStatus.BAD_REQUEST,
+      'User profile can not be updated.',
+    );
+  }
+
+  @Patch('avatar')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: './images/avatars',
+        filename: renameImageFile,
+      }),
+      fileFilter: imageFilter,
+    }),
+  )
+  async updateAvatar(
+    @CurrentUser() currentUser: UserInfo,
+    @UploadedFile() file,
+  ): Promise<UserInfo> {
+    const user = await this.authService.updateAvatar(
+      currentUser.sub,
+      file.filename,
     );
 
     if (user) return user;

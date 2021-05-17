@@ -3,7 +3,8 @@ export interface IUserInfo {
   email: string;
   fullName?: string;
   userName?: string;
-  avatarUrl?: string;
+  avatar?: string;
+  usePhoto: boolean;
   verificationLevel: number;
   accessToken: string;
 }

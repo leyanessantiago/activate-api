@@ -5,7 +5,8 @@ export class UserInfo {
   email: string;
   userName: string;
   fullName: string;
-  avatarUrl: string;
+  avatar: string;
+  usePhoto: boolean;
   verificationLevel: number;
   accessToken: string;
 
@@ -14,7 +15,8 @@ export class UserInfo {
     this.email = userInfo.email;
     this.fullName = userInfo.fullName;
     this.userName = userInfo.userName;
-    this.avatarUrl = userInfo.avatarUrl;
+    this.avatar = userInfo.avatar;
+    this.usePhoto = userInfo.usePhoto;
     this.verificationLevel = userInfo.verificationLevel;
     this.accessToken = userInfo.accessToken;
   }

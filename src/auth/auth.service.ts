@@ -1,13 +1,15 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { ValidationException } from '../core/exceptions/validation-exception';
 import { UserService } from '../user/user.service';
 import { ApiException } from '../core/exceptions/api-exception';
 import { SignUpDto } from './dto/sign-up.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserInfo } from './models/user-info';
 import { VerifyDto } from './dto/verify.dto';
+import { ProfileDto } from './dto/profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -57,12 +59,40 @@ export class AuthService {
     return this.getUserInfo(userUpdated);
   }
 
-  async updateProfile(sub: string, profileDto): Promise<UserInfo> {
+  async updateProfile(sub: string, profile: ProfileDto): Promise<UserInfo> {
     const user = await this.userService.findById(sub);
 
     if (user == null) throw new ApiException(404, 'User not found');
 
-    const userProfile: Prisma.UserUpdateInput = profileDto;
+    const userByUserName = await this.userService.findByUserName(
+      profile.userName,
+    );
+
+    if (user.id !== userByUserName.id) {
+      throw new ValidationException({
+        userName: 'The username is already taken.',
+      });
+    }
+
+    const userProfile: Prisma.UserUpdateInput = profile;
+    const userUpdated = await this.userService.update(sub, userProfile);
+
+    return this.getUserInfo(userUpdated);
+  }
+
+  async updateAvatar(sub: string, fileName: string): Promise<UserInfo> {
+    const user = await this.userService.findById(sub);
+
+    if (user == null) throw new ApiException(404, 'User not found');
+
+    const domain =
+      process.env.NODE_ENV === 'prod'
+        ? 'https://prod-domain:5000'
+        : 'http://localhost:5000';
+
+    const userProfile: Prisma.UserUpdateInput = {
+      avatar: `${domain}/auth/avatar/${fileName}`,
+    };
     const userUpdated = await this.userService.update(sub, userProfile);
 
     return this.getUserInfo(userUpdated);
@@ -77,7 +107,8 @@ export class AuthService {
       email: user.email,
       userName: user.userName,
       fullName: `${user.name} ${user.lastName}`,
-      avatarUrl: user.avatarUrl,
+      avatar: user.avatar,
+      usePhoto: user.usePhoto,
       verificationLevel: user.verificationLevel,
       accessToken: token,
     });

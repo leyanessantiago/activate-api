@@ -6,5 +6,5 @@ export interface IApiResponse {
   message?: string;
   statusCode: number;
   developMessage?: string;
-  validationErrors?: Dictionary<Array<string>>;
+  validationErrors?: Dictionary<string>;
 }

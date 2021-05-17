@@ -21,7 +21,7 @@ model User {
   follower		    Follower?
   verificationLevel Int @default(0)
   verificationCode Int?
-  avatarUrl       String?
+  avatar       String?
 }
 
 model Publisher {
