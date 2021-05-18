@@ -4,7 +4,6 @@ export interface IUserInfo {
   fullName?: string;
   userName?: string;
   avatar?: string;
-  usePhoto: boolean;
   verificationLevel: number;
   accessToken: string;
 }

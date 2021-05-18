@@ -68,7 +68,7 @@ export class AuthService {
       profile.userName,
     );
 
-    if (user.id !== userByUserName.id) {
+    if (!!userByUserName && user.id !== userByUserName.id) {
       throw new ValidationException({
         userName: 'The username is already taken.',
       });
@@ -86,7 +86,7 @@ export class AuthService {
     if (user == null) throw new ApiException(404, 'User not found');
 
     const domain =
-      process.env.NODE_ENV === 'prod'
+      process.env.NODE_ENV === 'production'
         ? 'https://prod-domain:5000'
         : 'http://localhost:5000';
 
@@ -108,7 +108,6 @@ export class AuthService {
       userName: user.userName,
       fullName: `${user.name} ${user.lastName}`,
       avatar: user.avatar,
-      usePhoto: user.usePhoto,
       verificationLevel: user.verificationLevel,
       accessToken: token,
     });

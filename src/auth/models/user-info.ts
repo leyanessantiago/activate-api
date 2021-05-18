@@ -6,7 +6,6 @@ export class UserInfo {
   userName: string;
   fullName: string;
   avatar: string;
-  usePhoto: boolean;
   verificationLevel: number;
   accessToken: string;
 
@@ -16,7 +15,6 @@ export class UserInfo {
     this.fullName = userInfo.fullName;
     this.userName = userInfo.userName;
     this.avatar = userInfo.avatar;
-    this.usePhoto = userInfo.usePhoto;
     this.verificationLevel = userInfo.verificationLevel;
     this.accessToken = userInfo.accessToken;
   }
