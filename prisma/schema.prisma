@@ -11,70 +11,70 @@ generator client {
 }
 
 model User {
-	id				      String	@id		@default(uuid())
-	userName		    String?	@unique @db.VarChar(255)
-	email			      String	@unique
-	name			      String?	@db.VarChar(255)
-	lastName		    String?	@db.VarChar(255)
-	password		    String
-	publisher		    Publisher?
-	follower		    Follower?
-  isVerified      Boolean @default(false)
-  verficationCode String?
-  avatarUrl       String?
+  id				      String	@id		@default(uuid())
+  userName		    String?	@unique @db.VarChar(255)
+  email			      String	@unique
+  name			      String?	@db.VarChar(255)
+  lastName		    String?	@db.VarChar(255)
+  password		    String
+  publisher		    Publisher?
+  follower		    Follower?
+  verificationLevel Int @default(0)
+  verificationCode Int?
+  avatar       String?
 }
 
 model Publisher {
-	events		  Event[]		@relation(name: "EventAuthor")
-	followedBy	Follower[]	@relation("PublisherFollows", references: [userId])
-	user		    User		@relation(fields: [userId], references: [id])
-	userId		  String		@id
+  events		  Event[]		@relation(name: "EventAuthor")
+  followedBy	Follower[]	@relation("PublisherFollows", references: [userId])
+  user		    User		@relation(fields: [userId], references: [id])
+  userId		  String		@id
 }
 
 model Follower {
-	following		    Publisher[]	@relation("PublisherFollows", references: [userId])
-	friends			    Follower[]	@relation(name: "FriendShip")
-	friendOf		    Follower[]	@relation(name: "FriendShip")
-	eventsFollowed	Event[]		@relation(name: "EventFollowers")
-	user			      User		@relation(fields: [userId], references: [id])
-	userId			    String		@id
+  following		    Publisher[]	@relation("PublisherFollows", references: [userId])
+  friends			    Follower[]	@relation(name: "FriendShip")
+  friendOf		    Follower[]	@relation(name: "FriendShip")
+  eventsFollowed	Event[]		@relation(name: "EventFollowers")
+  user			      User		@relation(fields: [userId], references: [id])
+  userId			    String		@id
 }
 
 model Category {
-	id		String	@id		@default(uuid())
-	name	String	@unique @db.VarChar(255)
+  id		String	@id		@default(uuid())
+  name	String	@unique @db.VarChar(255)
 }
 
 model Event {
-	id			    String		@id					@default(uuid())
-	name		    String		@db.VarChar(255)
-	date		    DateTime
-	address		  String
-	description	String?
-	image		String?
-	category	Category	@relation(fields: [categoryId], references: [id])
-	categoryId	String
-	author		Publisher	@relation(name: "EventAuthor", fields: [authorId], references: [userId])
-	authorId	String
-	followers	Follower[]	@relation(name: "EventFollowers")
-	comments	Comment[]
+  id			    String		@id					@default(uuid())
+  name		    String		@db.VarChar(255)
+  date		    DateTime
+  address		  String
+  description	String?
+  image		String?
+  category	Category	@relation(fields: [categoryId], references: [id])
+  categoryId	String
+  author		Publisher	@relation(name: "EventAuthor", fields: [authorId], references: [userId])
+  authorId	String
+  followers	Follower[]	@relation(name: "EventFollowers")
+  comments	Comment[]
 }
 
 model Comment {
-	id			String		@id		@default(uuid())
-	date		DateTime
-	content		String
-	response	String?
-	author		User		@relation(fields: [authorId], references: [id])
-	authorId	String
-	event		Event		@relation(fields: [eventId], references: [id])
-	eventId		String
+  id			String		@id		@default(uuid())
+  date		DateTime
+  content		String
+  response	String?
+  author		User		@relation(fields: [authorId], references: [id])
+  authorId	String
+  event		Event		@relation(fields: [eventId], references: [id])
+  eventId		String
 }
 
 model Activity {
-	id		String	@id		@default(uuid())
-	type	String
-	content	String
-	user	User	@relation(fields: [userId], references: [id])
-	userId	String
+  id		String	@id		@default(uuid())
+  type	String
+  content	String
+  user	User	@relation(fields: [userId], references: [id])
+  userId	String
 }

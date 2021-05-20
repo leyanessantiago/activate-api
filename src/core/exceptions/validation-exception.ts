@@ -1,9 +1,9 @@
 import { Dictionary } from 'express-serve-static-core';
 
 export class ValidationException extends Error {
-  validationErrors: Dictionary<Array<string>>;
+  validationErrors: Dictionary<string>;
 
-  constructor(validationErrors: Dictionary<Array<string>>) {
+  constructor(validationErrors: Dictionary<string>) {
     super();
 
     this.validationErrors = validationErrors;

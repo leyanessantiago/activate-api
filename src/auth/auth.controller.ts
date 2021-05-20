@@ -1,15 +1,27 @@
-import { Controller, Post, Body, UsePipes, HttpStatus } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { SignUpDto } from './dto/sign-up.dto';
-import { response } from 'express';
-import { SignUpValidationPipe } from './validators/sign-up-validator';
-import { UserInfo } from './models/user-info';
-import { SimpleResponse } from '../core/responses/simple-response';
-import { ApiException } from '../core/exceptions/api-exception';
-import { LoginDto } from './dto/login.dto';
-import { LoginValidator } from './validators/login-validator';
+import {
+  Body,
+  Controller,
+  HttpStatus,
+  Patch,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+  UsePipes,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { imageFilter, renameImageFile } from '../helpers/file-upload';
 import { Public } from '../core/jwt/public.decorator';
+import { CurrentUser } from '../core/jwt/current-user.decorator';
+import { ApiException } from '../core/exceptions/api-exception';
+import { SignUpDto } from './dto/sign-up.dto';
+import { LoginDto } from './dto/login.dto';
 import { VerifyDto } from './dto/verify.dto';
+import { UserInfo } from './models/user-info';
+import { AuthService } from './auth.service';
+import { SignUpValidationPipe } from './validators/sign-up-validator';
+import { LoginValidator } from './validators/login-validator';
+import { ProfileDto } from './dto/profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -18,15 +30,11 @@ export class AuthController {
   @Post('signup')
   @UsePipes(SignUpValidationPipe)
   @Public()
-  async signUp(@Body() signUp: SignUpDto): Promise<SimpleResponse<UserInfo>> {
+  async signUp(@Body() signUp: SignUpDto): Promise<UserInfo> {
     const user = await this.authService.signUp(signUp);
 
     if (user !== null) {
-      response.status(HttpStatus.OK);
-
-      return new SimpleResponse<UserInfo>({
-        data: this.authService.getUserInfo(user),
-      });
+      return user;
     }
 
     throw new ApiException(
@@ -38,25 +46,71 @@ export class AuthController {
   @Post('login')
   @UsePipes(LoginValidator)
   @Public()
-  async login(@Body() login: LoginDto): Promise<SimpleResponse<UserInfo>> {
+  async login(@Body() login: LoginDto): Promise<UserInfo> {
     const userInfo = await this.authService.login(login);
 
-    if (userInfo !== null)
-      return new SimpleResponse<UserInfo>({ data: userInfo });
+    if (userInfo !== null) return userInfo;
 
     throw new ApiException(
       HttpStatus.BAD_REQUEST,
-      'Email or password incorrect, please try again.',
+      'Email or password are incorrect, please try again.',
     );
   }
 
-  @Post('verify')
-  @Public()
-  async verify(@Body() verify: VerifyDto): Promise<SimpleResponse<UserInfo>> {
-    const user = await this.authService.verifyUser(verify);
+  @Patch('verify')
+  async verify(
+    @CurrentUser() currentUser: UserInfo,
+    @Body() verify: VerifyDto,
+  ): Promise<UserInfo> {
+    const user = await this.authService.verifyUser(currentUser.sub, verify);
 
-    if (user !== null) return new SimpleResponse<UserInfo>({ data: user });
+    if (user) return user;
 
     throw new ApiException(HttpStatus.BAD_REQUEST, 'User can not be verified.');
+  }
+
+  @Patch('profile')
+  async updateProfile(
+    @CurrentUser() currentUser: UserInfo,
+    @Body() profileData: ProfileDto,
+  ): Promise<UserInfo> {
+    const user = await this.authService.updateProfile(
+      currentUser.sub,
+      profileData,
+    );
+
+    if (user) return user;
+
+    throw new ApiException(
+      HttpStatus.BAD_REQUEST,
+      'User profile can not be updated.',
+    );
+  }
+
+  @Patch('avatar')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: './images/avatars',
+        filename: renameImageFile,
+      }),
+      fileFilter: imageFilter,
+    }),
+  )
+  async updateAvatar(
+    @CurrentUser() currentUser: UserInfo,
+    @UploadedFile() file,
+  ): Promise<UserInfo> {
+    const user = await this.authService.updateAvatar(
+      currentUser.sub,
+      file.filename,
+    );
+
+    if (user) return user;
+
+    throw new ApiException(
+      HttpStatus.BAD_REQUEST,
+      'User profile can not be updated.',
+    );
   }
 }

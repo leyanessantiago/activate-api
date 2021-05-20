@@ -1,13 +1,15 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
-import { UserService } from '../user/user.service';
-import { SignUpDto } from './dto/sign-up.dto';
-import { User, Prisma } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
+import { Prisma, User } from '@prisma/client';
+import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { ValidationException } from '../core/exceptions/validation-exception';
+import { UserService } from '../user/user.service';
+import { ApiException } from '../core/exceptions/api-exception';
+import { SignUpDto } from './dto/sign-up.dto';
 import { LoginDto } from './dto/login.dto';
 import { UserInfo } from './models/user-info';
-import { JwtService } from '@nestjs/jwt';
-import { ApiException } from '../core/exceptions/api-exception';
 import { VerifyDto } from './dto/verify.dto';
+import { ProfileDto } from './dto/profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -18,29 +20,21 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signUp(signUp: SignUpDto): Promise<User | null> {
-    const passowrdHash = await bcrypt.hash(signUp.password, this.salt);
+  async signUp(signUp: SignUpDto): Promise<UserInfo | null> {
+    const passwordHash = await bcrypt.hash(signUp.password, this.salt);
     const userInput: Prisma.UserCreateInput = {
       email: signUp.email,
-      password: passowrdHash,
-      verficationCode: Math.floor(100000 + Math.random() * 900000).toString(),
+      password: passwordHash,
+      verificationCode: Math.floor(100000 + Math.random() * 900000),
     };
     const user = await this.userService.create(userInput);
-
-    return user;
+    return this.getUserInfo(user);
   }
 
   async login(login: LoginDto): Promise<UserInfo | null> {
     const user = await this.userService.findByEmail(login.email);
 
-    const userIsNotVerified = user !== null && !user.isVerified;
-    if (userIsNotVerified)
-      throw new ApiException(
-        HttpStatus.UNAUTHORIZED,
-        'The user is not verifed.',
-      );
-
-    if (user === null) return null;
+    if (!user) return null;
 
     const isMatch = await bcrypt.compare(login.password, user.password);
     if (isMatch) return this.getUserInfo(user);
@@ -48,22 +42,58 @@ export class AuthService {
     return null;
   }
 
-  async verifyUser(verify: VerifyDto): Promise<UserInfo> {
-    const user = await this.userService.findById(verify.userId);
+  async verifyUser(sub: string, verifyDto: VerifyDto): Promise<UserInfo> {
+    const user = await this.userService.findById(sub);
 
     if (user == null) throw new ApiException(404, 'User not found');
 
-    if (user.verficationCode !== verify.code)
+    if (user.verificationCode !== verifyDto.code) {
       throw new ApiException(400, 'The code provided is incorrect');
+    }
 
     const userVerified: Prisma.UserUpdateInput = {
-      isVerified: true,
+      verificationLevel: 1,
     };
+    const userUpdated = await this.userService.update(sub, userVerified);
 
-    const userUpdated = await this.userService.update(
-      verify.userId,
-      userVerified,
+    return this.getUserInfo(userUpdated);
+  }
+
+  async updateProfile(sub: string, profile: ProfileDto): Promise<UserInfo> {
+    const user = await this.userService.findById(sub);
+
+    if (user == null) throw new ApiException(404, 'User not found');
+
+    const userByUserName = await this.userService.findByUserName(
+      profile.userName,
     );
+
+    if (!!userByUserName && user.id !== userByUserName.id) {
+      throw new ValidationException({
+        userName: 'The username is already taken.',
+      });
+    }
+
+    const userProfile: Prisma.UserUpdateInput = profile;
+    const userUpdated = await this.userService.update(sub, userProfile);
+
+    return this.getUserInfo(userUpdated);
+  }
+
+  async updateAvatar(sub: string, fileName: string): Promise<UserInfo> {
+    const user = await this.userService.findById(sub);
+
+    if (user == null) throw new ApiException(404, 'User not found');
+
+    const domain =
+      process.env.NODE_ENV === 'production'
+        ? 'https://prod-domain:5000'
+        : 'http://localhost:5000';
+
+    const userProfile: Prisma.UserUpdateInput = {
+      avatar: `${domain}/auth/avatar/${fileName}`,
+    };
+    const userUpdated = await this.userService.update(sub, userProfile);
 
     return this.getUserInfo(userUpdated);
   }
@@ -77,8 +107,8 @@ export class AuthService {
       email: user.email,
       userName: user.userName,
       fullName: `${user.name} ${user.lastName}`,
-      avatarUrl: user.avatarUrl,
-      isVerified: user.isVerified,
+      avatar: user.avatar,
+      verificationLevel: user.verificationLevel,
       accessToken: token,
     });
   }

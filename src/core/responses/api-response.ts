@@ -7,7 +7,7 @@ export class ApiResponse {
   successMessage: string;
   statusCode: number;
   developMessage: string;
-  validationErros: Dictionary<Array<string>>;
+  validationErros: Dictionary<string>;
 
   constructor(apiResponse: IApiResponse) {
     this.errorType = apiResponse.errorType;
@@ -33,9 +33,7 @@ export class ApiResponse {
     });
   }
 
-  static ValidationErrors(
-    validationErrors: Dictionary<Array<string>>,
-  ): ApiResponse {
+  static ValidationErrors(validationErrors: Dictionary<string>): ApiResponse {
     return new ApiResponse({
       errorType: 'validation',
       statusCode: 400,
