@@ -10,10 +10,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { imageFilter, renameImageFile } from 'src/helpers/file-upload';
-import { Public } from 'src/core/jwt/public.decorator';
-import { CurrentUser } from 'src/core/jwt/current-user.decorator';
-import { ApiException } from 'src/core/exceptions/api-exception';
+import { imageFilter, renameImageFile } from '../helpers/file-upload';
+import { Public } from '../core/jwt/public.decorator';
+import { CurrentUser } from '../core/jwt/current-user.decorator';
+import { ApiException } from '../core/exceptions/api-exception';
 import { SignUpDto } from './dto/sign-up.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyDto } from './dto/verify.dto';
