@@ -1,9 +1,12 @@
 import {
   Body,
   Controller,
+  Get,
   HttpStatus,
+  Param,
   Patch,
   Post,
+  Res,
   UploadedFile,
   UseInterceptors,
   UsePipes,
@@ -112,5 +115,10 @@ export class AuthController {
       HttpStatus.BAD_REQUEST,
       'User profile can not be updated.',
     );
+  }
+
+  @Get('avatar/:avatarImg')
+  getAvatar(@Param('avatarImg') avatarImg, @Res() res) {
+    return res.sendFile(avatarImg, { root: './images/avatars' });
   }
 }
