@@ -25,11 +25,16 @@ export class ApiResponse {
     });
   }
 
-  static Fail(statusCode: number, errorMessage: string): ApiResponse {
+  static Fail(
+    statusCode: number,
+    errorMessage: string,
+    error?: any,
+  ): ApiResponse {
     return new ApiResponse({
       errorType: 'error',
       statusCode: statusCode,
       errorMessage: errorMessage,
+      developMessage: error,
     });
   }
 

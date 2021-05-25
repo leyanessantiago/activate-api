@@ -20,11 +20,11 @@ import { ApiException } from '../core/exceptions/api-exception';
 import { SignUpDto } from './dto/sign-up.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyDto } from './dto/verify.dto';
-import { UserInfo } from './models/user-info';
 import { AuthService } from './auth.service';
 import { SignUpValidationPipe } from './validators/sign-up-validator';
 import { LoginValidator } from './validators/login-validator';
 import { ProfileDto } from './dto/profile.dto';
+import { IUserInfo } from './models/iuser-info';
 
 @Controller('auth')
 export class AuthController {
@@ -33,7 +33,7 @@ export class AuthController {
   @Post('signup')
   @UsePipes(SignUpValidationPipe)
   @Public()
-  async signUp(@Body() signUp: SignUpDto): Promise<UserInfo> {
+  async signUp(@Body() signUp: SignUpDto): Promise<IUserInfo> {
     const user = await this.authService.signUp(signUp);
 
     if (user !== null) {
@@ -49,7 +49,7 @@ export class AuthController {
   @Post('login')
   @UsePipes(LoginValidator)
   @Public()
-  async login(@Body() login: LoginDto): Promise<UserInfo> {
+  async login(@Body() login: LoginDto): Promise<IUserInfo> {
     const userInfo = await this.authService.login(login);
 
     if (userInfo !== null) return userInfo;
@@ -62,9 +62,9 @@ export class AuthController {
 
   @Patch('verify')
   async verify(
-    @CurrentUser() currentUser: UserInfo,
+    @CurrentUser() currentUser: IUserInfo,
     @Body() verify: VerifyDto,
-  ): Promise<UserInfo> {
+  ): Promise<IUserInfo> {
     const user = await this.authService.verifyUser(currentUser.sub, verify);
 
     if (user) return user;
@@ -74,9 +74,9 @@ export class AuthController {
 
   @Patch('profile')
   async updateProfile(
-    @CurrentUser() currentUser: UserInfo,
+    @CurrentUser() currentUser: IUserInfo,
     @Body() profileData: ProfileDto,
-  ): Promise<UserInfo> {
+  ): Promise<IUserInfo> {
     const user = await this.authService.updateProfile(
       currentUser.sub,
       profileData,
@@ -101,9 +101,9 @@ export class AuthController {
     }),
   )
   async updateAvatar(
-    @CurrentUser() currentUser: UserInfo,
+    @CurrentUser() currentUser: IUserInfo,
     @UploadedFile() file,
-  ): Promise<UserInfo> {
+  ): Promise<IUserInfo> {
     const user = await this.authService.updateAvatar(
       currentUser.sub,
       file.filename,
@@ -117,6 +117,7 @@ export class AuthController {
     );
   }
 
+  @Public()
   @Get('avatar/:avatarImg')
   getAvatar(@Param('avatarImg') avatarImg, @Res() res) {
     return res.sendFile(avatarImg, { root: './images/avatars' });
