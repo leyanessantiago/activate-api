@@ -7,9 +7,9 @@ import { UserService } from '../user/user.service';
 import { ApiException } from '../core/exceptions/api-exception';
 import { SignUpDto } from './dto/sign-up.dto';
 import { LoginDto } from './dto/login.dto';
-import { UserInfo } from './models/user-info';
 import { VerifyDto } from './dto/verify.dto';
 import { ProfileDto } from './dto/profile.dto';
+import { IUserInfo } from './models/iuser-info';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +20,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signUp(signUp: SignUpDto): Promise<UserInfo | null> {
+  async signUp(signUp: SignUpDto): Promise<IUserInfo | null> {
     const passwordHash = await bcrypt.hash(signUp.password, this.salt);
     const userInput: Prisma.UserCreateInput = {
       email: signUp.email,
@@ -31,7 +31,7 @@ export class AuthService {
     return this.getUserInfo(user);
   }
 
-  async login(login: LoginDto): Promise<UserInfo | null> {
+  async login(login: LoginDto): Promise<IUserInfo | null> {
     const user = await this.userService.findByEmail(login.email);
 
     if (!user) return null;
@@ -42,7 +42,7 @@ export class AuthService {
     return null;
   }
 
-  async verifyUser(sub: string, verifyDto: VerifyDto): Promise<UserInfo> {
+  async verifyUser(sub: string, verifyDto: VerifyDto): Promise<IUserInfo> {
     const user = await this.userService.findById(sub);
 
     if (user == null) throw new ApiException(404, 'User not found');
@@ -59,19 +59,21 @@ export class AuthService {
     return this.getUserInfo(userUpdated);
   }
 
-  async updateProfile(sub: string, profile: ProfileDto): Promise<UserInfo> {
+  async updateProfile(sub: string, profile: ProfileDto): Promise<IUserInfo> {
     const user = await this.userService.findById(sub);
 
     if (user == null) throw new ApiException(404, 'User not found');
 
-    const userByUserName = await this.userService.findByUserName(
-      profile.userName,
-    );
+    if (profile.userName) {
+      const userByUserName = await this.userService.findByUserName(
+        profile.userName,
+      );
 
-    if (!!userByUserName && user.id !== userByUserName.id) {
-      throw new ValidationException({
-        userName: 'The username is already taken.',
-      });
+      if (!!userByUserName && user.id !== userByUserName.id) {
+        throw new ValidationException({
+          userName: 'The username is already taken.',
+        });
+      }
     }
 
     const userProfile: Prisma.UserUpdateInput = profile;
@@ -80,15 +82,13 @@ export class AuthService {
     return this.getUserInfo(userUpdated);
   }
 
-  async updateAvatar(sub: string, fileName: string): Promise<UserInfo> {
+  async updateAvatar(sub: string, fileName: string): Promise<IUserInfo> {
     const user = await this.userService.findById(sub);
 
     if (user == null) throw new ApiException(404, 'User not found');
 
-    const domain =
-      process.env.NODE_ENV === 'production'
-        ? 'https://prod-domain:5000'
-        : 'http://localhost:5000';
+    const { DOMAIN_NAME, API_PREFIX } = process.env;
+    const domain = `${DOMAIN_NAME}/${API_PREFIX}`;
 
     const userProfile: Prisma.UserUpdateInput = {
       avatar: `${domain}/auth/avatar/${fileName}`,
@@ -98,18 +98,33 @@ export class AuthService {
     return this.getUserInfo(userUpdated);
   }
 
-  getUserInfo(user: User): UserInfo {
-    const payload = { email: user.email, sub: user.id };
+  getUserInfo(user: User): IUserInfo {
+    const {
+      id,
+      email,
+      userName,
+      name,
+      lastName,
+      avatar,
+      theme,
+      useDarkStyle,
+      verificationLevel,
+    } = user;
+
+    const payload = { email, sub: user.id };
     const token = this.jwtService.sign(payload);
 
-    return new UserInfo({
-      sub: user.id,
-      email: user.email,
-      userName: user.userName,
-      fullName: `${user.name} ${user.lastName}`,
-      avatar: user.avatar,
-      verificationLevel: user.verificationLevel,
+    return {
+      sub: id,
+      email,
+      userName,
+      name,
+      lastName,
+      avatar,
+      theme,
+      useDarkStyle,
+      verificationLevel,
       accessToken: token,
-    });
+    };
   }
 }

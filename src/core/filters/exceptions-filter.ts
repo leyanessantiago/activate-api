@@ -34,7 +34,9 @@ export class ExceptionsFilter implements ExceptionFilter {
           ? 'Oops something went wrong, please try later.'
           : exception.response.message || exception.message;
 
-      response.status(status).json(ApiResponse.Fail(status, errorMessage));
+      response
+        .status(status)
+        .json(ApiResponse.Fail(status, errorMessage, exception));
     }
   }
 }
