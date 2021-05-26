@@ -87,10 +87,8 @@ export class AuthService {
 
     if (user == null) throw new ApiException(404, 'User not found');
 
-    const domain =
-      process.env.NODE_ENV === 'production'
-        ? 'https://prod-domain:5000/v1/api'
-        : 'http://localhost:5000/v1/api';
+    const { DOMAIN_NAME, API_PREFIX } = process.env;
+    const domain = `${DOMAIN_NAME}/${API_PREFIX}`;
 
     const userProfile: Prisma.UserUpdateInput = {
       avatar: `${domain}/auth/avatar/${fileName}`,
