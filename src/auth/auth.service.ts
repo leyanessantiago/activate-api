@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { Prisma, User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -10,6 +10,7 @@ import { LoginDto } from './dto/login.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { ProfileDto } from './dto/profile.dto';
 import { IUserInfo } from './models/iuser-info';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -22,70 +23,109 @@ export class AuthService {
 
   async signUp(signUp: SignUpDto): Promise<IUserInfo | null> {
     const passwordHash = await bcrypt.hash(signUp.password, this.salt);
-    const userInput: Prisma.UserCreateInput = {
+
+    const updates: Prisma.UserCreateInput = {
       email: signUp.email,
       password: passwordHash,
       verificationCode: Math.floor(100000 + Math.random() * 900000),
     };
-    const user = await this.userService.create(userInput);
+
+    const user = await this.userService.create(updates);
     return this.getUserInfo(user);
   }
 
   async login(login: LoginDto): Promise<IUserInfo | null> {
     const user = await this.userService.findByEmail(login.email);
 
-    if (!user) return null;
+    if (!user) {
+      throw new ValidationException({
+        email: 'This email does not belongs to any account we have registered',
+      });
+    }
 
     const isMatch = await bcrypt.compare(login.password, user.password);
-    if (isMatch) return this.getUserInfo(user);
 
-    return null;
+    if (!isMatch) {
+      throw new ValidationException({
+        password: 'This password does not belongs to this account',
+      });
+    }
+
+    return this.getUserInfo(user);
   }
 
   async verifyUser(sub: string, verifyDto: VerifyDto): Promise<IUserInfo> {
     const user = await this.userService.findById(sub);
 
-    if (user == null) throw new ApiException(404, 'User not found');
-
-    if (user.verificationCode !== verifyDto.code) {
-      throw new ApiException(400, 'The code provided is incorrect');
+    if (!user) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, 'User not found');
     }
 
-    const userVerified: Prisma.UserUpdateInput = {
+    if (user.verificationCode !== verifyDto.code) {
+      throw new ValidationException({
+        code: 'This is not the code we sent you',
+      });
+    }
+
+    const updates: Prisma.UserUpdateInput = {
       verificationLevel: 1,
     };
-    const userUpdated = await this.userService.update(sub, userVerified);
 
-    return this.getUserInfo(userUpdated);
+    const updatedUser = await this.userService.update(sub, updates);
+    return this.getUserInfo(updatedUser);
   }
 
   async updateProfile(sub: string, profile: ProfileDto): Promise<IUserInfo> {
     const user = await this.userService.findById(sub);
 
-    if (user == null) throw new ApiException(404, 'User not found');
+    if (!user) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, 'User not found');
+    }
 
     if (profile.userName) {
-      const userByUserName = await this.userService.findByUserName(
-        profile.userName,
-      );
-
-      if (!!userByUserName && user.id !== userByUserName.id) {
-        throw new ValidationException({
-          userName: 'The username is already taken.',
-        });
-      }
+      await this.verifyUserName(user.id, profile.userName);
     }
 
     const userProfile: Prisma.UserUpdateInput = profile;
-    const userUpdated = await this.userService.update(sub, userProfile);
+    const updatedUser = await this.userService.update(sub, userProfile);
+    return this.getUserInfo(updatedUser);
+  }
 
-    return this.getUserInfo(userUpdated);
+  async changePassword(
+    sub: string,
+    credentials: ChangePasswordDto,
+  ): Promise<IUserInfo> {
+    const user = await this.userService.findById(sub);
+
+    if (!user) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, 'User not found');
+    }
+
+    const { current, newPassword } = credentials;
+
+    const passwordsMatch = await bcrypt.compare(current, user.password);
+
+    if (!passwordsMatch) {
+      throw new ValidationException({
+        current: 'This password does not match the one we have in store',
+      });
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, this.salt);
+    const updates: Prisma.UserUpdateInput = {
+      password: newPasswordHash,
+    };
+
+    const updatedUser = await this.userService.update(sub, updates);
+    return this.getUserInfo(updatedUser);
   }
 
   async updateAvatar(sub: string, fileName: string): Promise<IUserInfo> {
     const user = await this.userService.findById(sub);
 
-    if (user == null) throw new ApiException(404, 'User not found');
+    if (!user) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, 'User not found');
+    }
 
     const { DOMAIN_NAME, API_PREFIX } = process.env;
     const domain = `${DOMAIN_NAME}/${API_PREFIX}`;
@@ -93,9 +133,19 @@ export class AuthService {
     const userProfile: Prisma.UserUpdateInput = {
       avatar: `${domain}/auth/avatar/${fileName}`,
     };
-    const userUpdated = await this.userService.update(sub, userProfile);
 
-    return this.getUserInfo(userUpdated);
+    const updatedUser = await this.userService.update(sub, userProfile);
+    return this.getUserInfo(updatedUser);
+  }
+
+  async verifyUserName(id: string, userName: string) {
+    const userByUserName = await this.userService.findByUserName(userName);
+
+    if (!!userByUserName && id !== userByUserName.id) {
+      throw new ValidationException({
+        userName: 'The username is already taken',
+      });
+    }
   }
 
   getUserInfo(user: User): IUserInfo {
