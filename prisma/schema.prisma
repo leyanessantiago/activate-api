@@ -74,9 +74,10 @@ model Comment {
 }
 
 model Activity {
-  id		  String	@id		@default(uuid())
-  type  	String
-  content	String
-  user	  User	@relation(fields: [userId], references: [id])
-  userId	String
+  id		    String	@id		@default(uuid())
+  type  	  Int
+  user	    User	@relation(fields: [userId], references: [id])
+  userId	  String
+  event     Event? @relation(fields: [eventId], references: [id])
+  eventId   String?
 }
