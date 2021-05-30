@@ -1,10 +1,19 @@
 import { AbstractValidator } from '../../core/validators/abstract-validator';
-import { validEmail } from '../../core/utils/utilities';
 import { LoginDto } from '../dto/login.dto';
 
+import {
+  commonRules,
+  ValidationResult,
+  validateEntity,
+} from '../../helpers/form-validations';
+
+const rules = {
+  email: [commonRules.required, commonRules.email],
+  password: [commonRules.required, commonRules.password],
+};
+
 export class LoginValidator extends AbstractValidator<LoginDto> {
-  async validate(value: LoginDto): Promise<void> {
-    if (!validEmail(value.email))
-      this.setValidationError('email', 'This is not a valid email');
+  async validate(credentials: LoginDto): Promise<ValidationResult> {
+    return validateEntity(credentials, rules);
   }
 }

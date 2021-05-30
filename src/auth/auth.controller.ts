@@ -25,6 +25,8 @@ import { SignUpValidationPipe } from './validators/sign-up-validator';
 import { LoginValidator } from './validators/login-validator';
 import { ProfileDto } from './dto/profile.dto';
 import { IUserInfo } from './models/iuser-info';
+import { ChangePasswordValidator } from './validators/chage-password-validator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -36,7 +38,7 @@ export class AuthController {
   async signUp(@Body() signUp: SignUpDto): Promise<IUserInfo> {
     const user = await this.authService.signUp(signUp);
 
-    if (user !== null) {
+    if (user) {
       return user;
     }
 
@@ -50,14 +52,7 @@ export class AuthController {
   @UsePipes(LoginValidator)
   @Public()
   async login(@Body() login: LoginDto): Promise<IUserInfo> {
-    const userInfo = await this.authService.login(login);
-
-    if (userInfo !== null) return userInfo;
-
-    throw new ApiException(
-      HttpStatus.BAD_REQUEST,
-      'Email or password are incorrect, please try again.',
-    );
+    return this.authService.login(login);
   }
 
   @Patch('verify')
@@ -65,11 +60,7 @@ export class AuthController {
     @CurrentUser() currentUser: IUserInfo,
     @Body() verify: VerifyDto,
   ): Promise<IUserInfo> {
-    const user = await this.authService.verifyUser(currentUser.sub, verify);
-
-    if (user) return user;
-
-    throw new ApiException(HttpStatus.BAD_REQUEST, 'User can not be verified.');
+    return this.authService.verifyUser(currentUser.sub, verify);
   }
 
   @Patch('profile')
@@ -77,17 +68,15 @@ export class AuthController {
     @CurrentUser() currentUser: IUserInfo,
     @Body() profileData: ProfileDto,
   ): Promise<IUserInfo> {
-    const user = await this.authService.updateProfile(
-      currentUser.sub,
-      profileData,
-    );
+    return this.authService.updateProfile(currentUser.sub, profileData);
+  }
 
-    if (user) return user;
-
-    throw new ApiException(
-      HttpStatus.BAD_REQUEST,
-      'User profile can not be updated.',
-    );
+  @Patch('password')
+  async updatePassword(
+    @CurrentUser() currentUser: IUserInfo,
+    @Body(new ChangePasswordValidator()) credentials: ChangePasswordDto,
+  ): Promise<IUserInfo> {
+    return this.authService.changePassword(currentUser.sub, credentials);
   }
 
   @Patch('avatar')
@@ -104,17 +93,7 @@ export class AuthController {
     @CurrentUser() currentUser: IUserInfo,
     @UploadedFile() file,
   ): Promise<IUserInfo> {
-    const user = await this.authService.updateAvatar(
-      currentUser.sub,
-      file.filename,
-    );
-
-    if (user) return user;
-
-    throw new ApiException(
-      HttpStatus.BAD_REQUEST,
-      'User profile can not be updated.',
-    );
+    return this.authService.updateAvatar(currentUser.sub, file.filename);
   }
 
   @Public()

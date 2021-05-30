@@ -7,7 +7,7 @@ export class ApiResponse {
   successMessage: string;
   statusCode: number;
   developMessage: string;
-  validationErros: Dictionary<string>;
+  validationErrors: Dictionary<string>;
 
   constructor(apiResponse: IApiResponse) {
     this.errorType = apiResponse.errorType;
@@ -15,7 +15,7 @@ export class ApiResponse {
     this.successMessage = apiResponse.message;
     this.statusCode = apiResponse.statusCode;
     this.developMessage = apiResponse.developMessage;
-    this.validationErros = apiResponse.validationErrors;
+    this.validationErrors = apiResponse.validationErrors;
   }
 
   static Success(statusCode: number, successMessage: string): ApiResponse {
