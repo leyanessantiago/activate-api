@@ -13,10 +13,8 @@ import {
   CategoryService,
   FetchCategoriesQueryParams,
 } from './category.service';
-import { Public } from '../core/jwt/public.decorator';
 
 @Controller('categories')
-@Public()
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
