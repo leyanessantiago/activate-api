@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExceptionsFilter } from './core/filters/exceptions-filter';
+import { ValidationPipe } from '@nestjs/common';
 
 const { API_PREFIX, PORT } = process.env;
 
@@ -9,6 +10,7 @@ async function bootstrap() {
   app.enableCors();
   app.useGlobalFilters(new ExceptionsFilter());
   app.setGlobalPrefix(API_PREFIX);
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
   await app.listen(PORT || 3000);
 }
 bootstrap();
