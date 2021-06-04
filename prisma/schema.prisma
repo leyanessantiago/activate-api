@@ -11,22 +11,23 @@ generator client {
 }
 
 model User {
-  id                  String     @id @default(uuid())
-  userName            String?    @unique @db.VarChar(255)
-  email               String     @unique
-  name                String?    @db.VarChar(255)
-  lastName            String?    @db.VarChar(255)
-  password            String
-  publisher           Publisher?
-  follower            Follower?
-  verificationLevel   Int        @default(0)
-  verificationCode    Int?
-  avatar              String?
-  theme               String?
-  useDarkStyle        Boolean?
+  id				      String	@id		@default(uuid())
+  userName		    String?	@unique @db.VarChar(255)
+  email			      String	@unique
+  name			      String?	@db.VarChar(255)
+  lastName		    String?	@db.VarChar(255)
+  password		    String
+  publisher		    Publisher?
+  follower		    Follower?
+  verificationLevel Int @default(0)
+  verificationCode Int?
+  avatar          String?
+  theme           String?
+  useDarkStyle    Boolean?
+  UserInterests     UserInterests[]
   comments            Comment[]
-  createdActivities   Activity[] @relation("CreatedActivities")
-  receivedActivities  Activity[] @relation("ReceivedActivities")
+    createdActivities   Activity[] @relation("CreatedActivities")
+    receivedActivities  Activity[] @relation("ReceivedActivities")
 }
 
 model Publisher {
@@ -58,9 +59,14 @@ model FriendRequest {
 }
 
 model Category {
-  id      String  @id @default(uuid())
-  name    String  @unique @db.VarChar(255)
-  Event   Event[]
+  id            String          @id @default(uuid())
+  name          String          @unique @db.VarChar(255)
+  icon          String
+  parentId      String?
+  parent        Category?       @relation("SubCategories", fields: [parentId], references: [id])
+  subcategories Category[]      @relation("SubCategories")
+  Event         Event[]
+  UserInterests UserInterests[]
 }
 
 model Event {
@@ -105,4 +111,14 @@ model Activity {
   commentId   String?
   seen        Boolean?  @default(false)
   dateSent    DateTime  @default(now())
+}
+
+model UserInterests {
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+  relevance  Int      @default(0)
+
+  @@id([userId, categoryId])
 }
