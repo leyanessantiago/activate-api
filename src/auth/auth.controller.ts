@@ -22,7 +22,6 @@ import { LoginDto } from './dto/login.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { AuthService } from './auth.service';
 import { SignUpValidationPipe } from './validators/sign-up-validator';
-import { LoginValidator } from './validators/login-validator';
 import { ProfileDto } from './dto/profile.dto';
 import { IUserInfo } from './models/iuser-info';
 import { ChangePasswordValidator } from './validators/chage-password-validator';
@@ -49,7 +48,6 @@ export class AuthController {
   }
 
   @Post('login')
-  @UsePipes(LoginValidator)
   @Public()
   async login(@Body() login: LoginDto): Promise<IUserInfo> {
     return this.authService.login(login);

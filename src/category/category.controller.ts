@@ -8,19 +8,19 @@ import {
   Delete,
   Query,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import {
   CategoryService,
   FetchCategoriesQueryParams,
 } from './category.service';
+import { CategoryDto } from './dto/create-category.dto';
 
 @Controller('categories')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
   @Post()
-  create(@Body() createCategoryInput: Prisma.CategoryCreateInput) {
-    return this.categoryService.create(createCategoryInput);
+  create(@Body() createCategoryDto: CategoryDto) {
+    return this.categoryService.create(createCategoryDto);
   }
 
   @Get()
@@ -57,11 +57,8 @@ export class CategoryController {
   }
 
   @Put(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateCategoryInput: Prisma.CategoryCreateInput,
-  ) {
-    return this.categoryService.update(id, updateCategoryInput);
+  update(@Param('id') id: string, @Body() updateCategoryDto: CategoryDto) {
+    return this.categoryService.update(id, updateCategoryDto);
   }
 
   @Delete(':id')

@@ -48,7 +48,7 @@ model Follower {
 model Category {
   id            String          @id @default(uuid())
   name          String          @unique @db.VarChar(255)
-  icon          String?
+  icon          String
   parentId      String?
   parent        Category?       @relation("SubCategories", fields: [parentId], references: [id])
   subcategories Category[]      @relation("SubCategories")

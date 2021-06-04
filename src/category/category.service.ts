@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { CategoryDto } from './dto/create-category.dto';
 
 export type FetchCategoriesQueryParams = {
   page: number;
@@ -13,9 +14,9 @@ export type FetchCategoriesQueryParams = {
 export class CategoryService {
   constructor(private prismaService: PrismaService) {}
 
-  create(createCategoryInput: Prisma.CategoryCreateInput) {
+  create(createCategoryDto: CategoryDto) {
     return this.prismaService.category.create({
-      data: createCategoryInput,
+      data: createCategoryDto,
     });
   }
 
@@ -51,11 +52,7 @@ export class CategoryService {
         parentId: parentId || null,
       },
       include: {
-        subcategories: {
-          include: {
-            subcategories: true,
-          },
-        },
+        subcategories: true,
       },
     };
 
@@ -80,7 +77,7 @@ export class CategoryService {
     });
   }
 
-  update(id: string, createCategoryInput: Prisma.CategoryCreateInput) {
+  update(id: string, createCategoryInput: CategoryDto) {
     return this.prismaService.category.update({
       data: createCategoryInput,
       where: { id },

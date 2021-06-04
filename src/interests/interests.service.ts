@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { SetUserInterestsDto } from './dto/set-user-interests.dto';
 
 @Injectable()
-export class UserInterestsService {
+export class InterestsService {
   constructor(private prismaService: PrismaService) {}
 
   private removeDeselectedUserInterest(userInterestsToDelete) {
@@ -22,9 +21,7 @@ export class UserInterestsService {
     return Promise.all(deletes);
   }
 
-  async setUserInterests(setUserInterestsInput: SetUserInterestsDto) {
-    const { userId, categoriesId } = setUserInterestsInput;
-
+  async setUserInterests(userId: string, categoryIds: string[] = []) {
     const currentUserInterests = await this.prismaService.userInterests.findMany(
       {
         where: {
@@ -33,20 +30,20 @@ export class UserInterestsService {
       },
     );
 
-    for (const index in categoriesId) {
+    for (const index in categoryIds) {
       const currentUserInterestsIndex = currentUserInterests.findIndex(
         (currentUserInterest) =>
-          currentUserInterest.categoryId === categoriesId[index],
+          currentUserInterest.categoryId === categoryIds[index],
       );
       if (currentUserInterestsIndex) {
-        categoriesId.splice(parseInt(index), 0);
+        categoryIds.splice(parseInt(index), 0);
         currentUserInterests.splice(currentUserInterestsIndex, 0);
       }
     }
 
     await this.removeDeselectedUserInterest(currentUserInterests);
 
-    const newUserInterests: Prisma.UserInterestsUncheckedCreateInput[] = categoriesId.map(
+    const newUserInterests: Prisma.UserInterestsUncheckedCreateInput[] = categoryIds.map(
       (categoryId) => ({
         userId,
         categoryId,
