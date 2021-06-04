@@ -74,8 +74,7 @@ export default async function seedEventActivities(prisma: PrismaClient) {
     );
   });
 
-  prisma.activity.createMany({
+  await prisma.activity.createMany({
     data: eventActivities,
-    skipDuplicates: true,
   });
 }

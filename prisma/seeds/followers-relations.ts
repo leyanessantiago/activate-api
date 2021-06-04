@@ -68,41 +68,6 @@ export default async function seedFollowersRelations(prisma: PrismaClient) {
       skipDuplicates: true,
     });
 
-    console.log('Seeding user related activities');
-
-    const frReceivedActivities = requestsSlice.map((fr) => ({
-      creatorId: fr.userId,
-      receiverId: follower.userId,
-      type: 5,
-      dateSent: faker.date.past(0, new Date()),
-      seen: faker.datatype.boolean(),
-    }));
-
-    const frAcceptedActivities = friendsSlice.map((fr) => ({
-      creatorId: fr.userId,
-      receiverId: follower.userId,
-      type: 6,
-      dateSent: faker.date.past(0, new Date()),
-      seen: faker.datatype.boolean(),
-    }));
-
-    const followingActivities = following.map((pub) => ({
-      creatorId: follower.userId,
-      receiverId: pub.userId,
-      type: 4,
-      dateSent: faker.date.past(0, new Date()),
-      seen: faker.datatype.boolean(),
-    }));
-
-    await prisma.activity.createMany({
-      data: [
-        ...frReceivedActivities,
-        ...frAcceptedActivities,
-        ...followingActivities,
-      ],
-      skipDuplicates: true,
-    });
-
     follower = friendsPool.shift();
   }
 }

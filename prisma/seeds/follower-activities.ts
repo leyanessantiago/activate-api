@@ -12,6 +12,11 @@ export default async function seedFollowerActivities(prisma: PrismaClient) {
       id: true,
       follower: {
         select: {
+          following: {
+            select: {
+              userId: true,
+            },
+          },
           friends: {
             select: {
               userId: true,
@@ -28,8 +33,36 @@ export default async function seedFollowerActivities(prisma: PrismaClient) {
     },
   });
 
-  const inviters = faker.random.arrayElements(loginUser.follower.friends);
-  const invitationsActivities = inviters.map((friend) => ({
+  const {
+    follower: { following, friends, receivedRequests },
+  } = loginUser;
+
+  const followedPublishers = following.map((pub) => ({
+    type: 4,
+    creatorId: loginUser.id,
+    receiverId: pub.userId,
+    dateSent: faker.date.past(0, new Date()),
+    seen: faker.datatype.boolean(),
+  }));
+
+  const friendRequestsReceived = receivedRequests.map((req) => ({
+    type: 5,
+    creatorId: req.creatorId,
+    receiverId: loginUser.id,
+    dateSent: faker.date.past(0, new Date()),
+    seen: faker.datatype.boolean(),
+  }));
+
+  const friendRequestsAccepted = friends.map((friend) => ({
+    type: 6,
+    creatorId: friend.userId,
+    receiverId: loginUser.id,
+    dateSent: faker.date.past(0, new Date()),
+    seen: faker.datatype.boolean(),
+  }));
+
+  const inviters = faker.random.arrayElements(friends);
+  const invitations = inviters.map((friend) => ({
     type: 0,
     creatorId: friend.userId,
     receiverId: loginUser.id,
@@ -38,8 +71,12 @@ export default async function seedFollowerActivities(prisma: PrismaClient) {
     seen: faker.datatype.boolean(),
   }));
 
-  prisma.activity.createMany({
-    data: [...invitationsActivities],
-    skipDuplicates: true,
+  await prisma.activity.createMany({
+    data: [
+      ...invitations,
+      ...friendRequestsReceived,
+      ...friendRequestsAccepted,
+      ...followedPublishers,
+    ],
   });
 }
