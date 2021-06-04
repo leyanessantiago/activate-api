@@ -32,25 +32,24 @@ const images: string[] = [
   'virtual-tour.jpeg',
 ];
 
-export default async function seedEvents(
-  prisma: PrismaClient,
-  publishers: Publisher[],
-  users: Follower[],
-  categories: Category[],
-) {
+export default async function seedEvents(prisma: PrismaClient) {
   console.log('Seeding events');
 
+  const publishers: Publisher[] = await prisma.publisher.findMany({
+    include: { user: true },
+  });
+  const users: Follower[] = await prisma.follower.findMany({
+    include: { user: true },
+  });
+  const categories: Category[] = await prisma.category.findMany();
+
   const events = new Array(20).fill(1).map(() => {
-    const imageIndex = faker.datatype.number({ min: 0, max: 4 });
     const { DOMAIN_NAME, API_PREFIX } = process.env;
     const domain = `${DOMAIN_NAME}/${API_PREFIX}`;
-    const image = `${domain}/event/image/${images[imageIndex]}`;
-
-    const publisherIndex = faker.datatype.number({ min: 0, max: 14 });
-    const authorId = publishers[publisherIndex].userId;
-
-    const categoryIndex = faker.datatype.number({ min: 0, max: 7 });
-    const categoryId = categories[categoryIndex].id;
+    const imageName = faker.random.arrayElement(images);
+    const image = `${domain}/event/image/${imageName}`;
+    const authorId = faker.random.arrayElement(publishers).userId;
+    const categoryId = faker.random.arrayElement(categories).id;
 
     return {
       image,

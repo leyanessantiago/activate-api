@@ -1,4 +1,4 @@
-import { PrismaClient, Category } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const categories = [
   'Music',
@@ -15,20 +15,12 @@ const categories = [
   'Night Out',
 ];
 
-export default async function seedCategories(
-  prisma: PrismaClient,
-): Promise<Category[]> {
+export default async function seedCategories(prisma: PrismaClient) {
   console.log('Seeding categories');
 
-  const entities = [];
-
   for (const cat of categories) {
-    const dbEntity = await prisma.category.create({
+    await prisma.category.create({
       data: { name: cat },
     });
-
-    entities.push(dbEntity);
   }
-
-  return entities;
 }

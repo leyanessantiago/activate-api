@@ -1,10 +1,8 @@
-import { PrismaClient, Publisher, User } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import * as faker from 'faker';
 import * as bcrypt from 'bcrypt';
 
-export default async function seedPublishers(
-  prisma: PrismaClient,
-): Promise<Publisher[]> {
+export default async function seedPublishers(prisma: PrismaClient) {
   console.log('Seeding users (publishers)');
 
   const users = new Array(15).fill(1).map(() => {
@@ -31,8 +29,6 @@ export default async function seedPublishers(
     } as User;
   });
 
-  const entities = [];
-
   for (const user of users) {
     const dbUser = await prisma.user.upsert({
       where: { email: user.email },
@@ -40,7 +36,7 @@ export default async function seedPublishers(
       create: user,
     });
 
-    const publisher = await prisma.publisher.create({
+    await prisma.publisher.create({
       data: {
         user: {
           connect: {
@@ -49,9 +45,5 @@ export default async function seedPublishers(
         },
       },
     });
-
-    entities.push(publisher);
   }
-
-  return entities;
 }

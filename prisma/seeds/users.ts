@@ -1,4 +1,4 @@
-import { PrismaClient, User, Follower } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 import * as faker from 'faker';
 import * as bcrypt from 'bcrypt';
 
@@ -15,9 +15,7 @@ const loginUser = {
   useDarkStyle: true,
 };
 
-export default async function seedUsers(
-  prisma: PrismaClient,
-): Promise<Follower[]> {
+export default async function seedUsers(prisma: PrismaClient) {
   console.log('Seeding users (followers)');
 
   const users = new Array(30).fill(1).map(() => {
@@ -46,7 +44,6 @@ export default async function seedUsers(
 
   const extendedUsers = [loginUser, ...users];
 
-  const entities = [];
   for (const user of extendedUsers) {
     const dbUser = await prisma.user.upsert({
       where: { email: user.email },
@@ -54,7 +51,7 @@ export default async function seedUsers(
       create: user,
     });
 
-    const follower = await prisma.follower.create({
+    await prisma.follower.create({
       data: {
         user: {
           connect: {
@@ -63,9 +60,5 @@ export default async function seedUsers(
         },
       },
     });
-
-    entities.push(follower);
   }
-
-  return entities;
 }
