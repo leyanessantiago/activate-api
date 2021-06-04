@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { CategoryDto } from './dto/create-category.dto';
+import { CategoryDto } from './dto/category.dto';
 
 export type FetchCategoriesQueryParams = {
   page: number;
