@@ -22,7 +22,7 @@ export class UserService {
     });
   }
 
-  async findFriends(id: string): Promise<Follower[]> {
+  async findFriends(id: string, extended = false): Promise<Follower[]> {
     const follower = await this.prismaService.follower.findUnique({
       where: {
         userId: id,
@@ -30,7 +30,15 @@ export class UserService {
       include: {
         friends: {
           include: {
-            user: true,
+            user: extended || {
+              select: {
+                id: true,
+                name: true,
+                lastName: true,
+                avatar: true,
+                userName: true,
+              },
+            },
           },
         },
       },
@@ -43,7 +51,7 @@ export class UserService {
     return follower.friends;
   }
 
-  async findPublishers(id: string): Promise<Publisher[]> {
+  async findPublishers(id: string, extended = false): Promise<Publisher[]> {
     const follower = await this.prismaService.follower.findUnique({
       where: {
         userId: id,
@@ -51,7 +59,15 @@ export class UserService {
       include: {
         following: {
           include: {
-            user: true,
+            user: extended || {
+              select: {
+                id: true,
+                name: true,
+                lastName: true,
+                avatar: true,
+                userName: true,
+              },
+            },
           },
         },
       },

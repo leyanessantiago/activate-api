@@ -11,85 +11,106 @@ generator client {
 }
 
 model User {
-  id                String          @id @default(uuid())
-  userName          String?         @unique @db.VarChar(255)
-  email             String          @unique
-  name              String?         @db.VarChar(255)
-  lastName          String?         @db.VarChar(255)
-  password          String
-  publisher         Publisher?
-  follower          Follower?
-  verificationLevel Int             @default(0)
-  verificationCode  Int?
-  avatar            String?
-  theme             String?
-  useDarkStyle      Boolean?
-  Comment           Comment[]
-  Activity          Activity[]
-  UserInterests     UserInterests[]
+  id				          String	@id		@default(uuid())
+  userName		        String?	@unique @db.VarChar(255)
+  email			          String	@unique
+  name			          String?	@db.VarChar(255)
+  lastName		        String?	@db.VarChar(255)
+  password		        String
+  publisher		        Publisher?
+  follower		        Follower?
+  verificationLevel   Int @default(0)
+  verificationCode    Int?
+  avatar              String?
+  theme               String?
+  useDarkStyle        Boolean?
+  comments            Comment[]
+  interests           UserInterests[]
+  createdActivities   Activity[] @relation("CreatedActivities")
+  receivedActivities  Activity[] @relation("ReceivedActivities")
 }
 
 model Publisher {
-  events     Event[]    @relation(name: "EventAuthor")
-  followedBy Follower[] @relation("PublisherFollows", references: [userId])
-  user       User       @relation(fields: [userId], references: [id])
-  userId     String     @id
+  events      Event[]    @relation(name: "EventAuthor")
+  followedBy  Follower[] @relation("PublisherFollows", references: [userId])
+  user        User       @relation(fields: [userId], references: [id])
+  userId      String     @id
 }
 
 model Follower {
-  following      Publisher[] @relation("PublisherFollows", references: [userId])
-  friends        Follower[]  @relation(name: "FriendShip")
-  friendOf       Follower[]  @relation(name: "FriendShip")
-  eventsFollowed Event[]     @relation(name: "EventFollowers")
-  user           User        @relation(fields: [userId], references: [id])
-  userId         String      @id
+  following         Publisher[]     @relation("PublisherFollows", references: [userId])
+  friends           Follower[]      @relation(name: "FriendShip")
+  friendOf          Follower[]      @relation(name: "FriendShip")
+  eventsFollowed    Event[]         @relation(name: "EventFollower")
+  user              User            @relation(fields: [userId], references: [id])
+  userId            String          @id
+  sentRequests      FriendRequest[] @relation("SentRequests")
+  receivedRequests  FriendRequest[] @relation("ReceivedRequests")
+}
+
+model FriendRequest {
+  creator       Follower @relation("SentRequests", fields: [creatorId], references: [userId])
+  creatorId     String
+  receiver      Follower @relation("ReceivedRequests", fields: [receiverId], references: [userId])
+  receiverId    String
+  dateSent      DateTime @default(now())
+
+  @@id([creatorId, receiverId])
 }
 
 model Category {
-  id            String          @id @default(uuid())
-  name          String          @unique @db.VarChar(255)
-  icon          String
-  parentId      String?
-  parent        Category?       @relation("SubCategories", fields: [parentId], references: [id])
-  subcategories Category[]      @relation("SubCategories")
-  Event         Event[]
-  UserInterests UserInterests[]
+  id              String          @id @default(uuid())
+  name            String          @unique @db.VarChar(255)
+  icon            String
+  parentId        String?
+  parent          Category?       @relation("SubCategories", fields: [parentId], references: [id])
+  subcategories   Category[]      @relation("SubCategories")
+  events          Event[]
+  userInterests   UserInterests[]
 }
 
 model Event {
-  id          String     @id @default(uuid())
-  name        String     @db.VarChar(255)
-  date        DateTime
-  address     String
-  description String?
-  image       String?
-  category    Category   @relation(fields: [categoryId], references: [id])
-  categoryId  String
-  author      Publisher  @relation(name: "EventAuthor", fields: [authorId], references: [userId])
-  authorId    String
-  followers   Follower[] @relation(name: "EventFollowers")
-  comments    Comment[]
-  Activity    Activity[]
+  id            String     @id @default(uuid())
+  name          String     @db.VarChar(255)
+  date          DateTime
+  address       String
+  description   String?
+  image         String?
+  category      Category   @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  author        Publisher  @relation(name: "EventAuthor", fields: [authorId], references: [userId])
+  authorId      String
+  followers     Follower[] @relation(name: "EventFollower")
+  comments      Comment[]
+  activities    Activity[]
 }
 
 model Comment {
-  id       String   @id @default(uuid())
-  date     DateTime
-  content  String
-  response String?
-  author   User     @relation(fields: [authorId], references: [id])
-  authorId String
-  event    Event    @relation(fields: [eventId], references: [id])
-  eventId  String
+  id          String   @id @default(uuid())
+  date        DateTime
+  content     String
+  response    String?
+  author      User     @relation(fields: [authorId], references: [id])
+  authorId    String
+  event       Event    @relation(fields: [eventId], references: [id])
+  eventId     String
+  dateCreated DateTime @default(now())
+  activity    Activity[]
 }
 
 model Activity {
-  id      String  @id @default(uuid())
-  type    Int
-  user    User    @relation(fields: [userId], references: [id])
-  userId  String
-  event   Event?  @relation(fields: [eventId], references: [id])
-  eventId String?
+  id          String    @id @default(uuid())
+  type        Int
+  creator     User      @relation("CreatedActivities", fields: [creatorId], references: [id])
+  creatorId   String
+  receiver    User      @relation("ReceivedActivities", fields: [receiverId], references: [id])
+  receiverId  String
+  event       Event?    @relation(fields: [eventId], references: [id])
+  eventId     String?
+  comment     Comment?   @relation(fields: [commentId], references: [id])
+  commentId   String?
+  seen        Boolean?  @default(false)
+  dateSent    DateTime  @default(now())
 }
 
 model UserInterests {
