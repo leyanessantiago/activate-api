@@ -22,7 +22,7 @@ export class AuthService {
   ) {}
 
   async signUp(signUp: SignUpDto): Promise<IUserInfo | null> {
-    const passwordHash = bcrypt.hashSync(signUp.password, this.salt);
+    const passwordHash = await bcrypt.hash(signUp.password, this.salt);
 
     const updates: Prisma.UserCreateInput = {
       email: signUp.email,
