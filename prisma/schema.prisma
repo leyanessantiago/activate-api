@@ -86,16 +86,16 @@ model Event {
 }
 
 model Comment {
-  id          String   @id @default(uuid())
-  date        DateTime
-  content     String
-  response    String?
-  author      User     @relation(fields: [authorId], references: [id])
-  authorId    String
-  event       Event    @relation(fields: [eventId], references: [id])
-  eventId     String
-  dateCreated DateTime @default(now())
-  activity    Activity[]
+  id            String   @id @default(uuid())
+  content       String
+  response      String?
+  author        User     @relation(fields: [authorId], references: [id])
+  authorId      String
+  event         Event    @relation(fields: [eventId], references: [id])
+  eventId       String
+  dateCreated   DateTime @default(now())
+  dateResponded DateTime?
+  activity      Activity[]
 }
 
 model Activity {
