@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Category, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -54,5 +54,27 @@ export class InterestsService {
     return this.prismaService.userInterests.createMany({
       data: newUserInterests,
     });
+  }
+
+  async getUserInterests(userId: string): Promise<Category[]> {
+    const interests = await this.prismaService.userInterests.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        relevance: 'desc',
+      },
+      select: {
+        category: {
+          select: {
+            id: true,
+            name: true,
+            icon: true,
+          },
+        },
+      },
+    });
+
+    return interests.map((interest) => interest.category as Category);
   }
 }
