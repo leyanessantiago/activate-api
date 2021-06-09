@@ -6,7 +6,7 @@ const categories = [
     icon: 'music',
     subcategories: [
       { name: 'Music', icon: 'music' },
-      { name: 'Movies', icon: 'video' },
+      { name: 'Movies', icon: 'film' },
       { name: 'Cooking', icon: 'restaurant' },
       { name: 'Pets', icon: 'pet' },
       { name: 'Fashion', icon: 'fashion' },
@@ -34,12 +34,24 @@ const categories = [
     ],
   },
   {
-    name: 'Science',
-    icon: 'flask',
+    name: 'Health',
+    icon: 'heart_beat',
     subcategories: [
-      { name: 'Health', icon: 'heart_beat' },
+      { name: 'Heart', icon: 'heart' },
       { name: 'Audition', icon: 'ear' },
+      { name: 'Maternity', icon: 'baby_carriage' },
+      { name: 'Brain', icon: 'brain' },
+    ],
+  },
+  {
+    name: 'Science',
+    icon: 'atom',
+    subcategories: [
+      { name: 'Fisics', icon: 'atom' },
+      { name: 'Chemistry', icon: 'flask' },
       { name: 'Tec', icon: 'devices' },
+      { name: 'Electronics', icon: 'circuit' },
+      { name: 'Software', icon: 'curly_brackets' },
     ],
   },
 ];
