@@ -62,7 +62,7 @@ export class InterestsService {
         userId,
       },
       orderBy: {
-        relevance: 'asc',
+        relevance: 'desc',
       },
       select: {
         category: {
