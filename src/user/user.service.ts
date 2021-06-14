@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { User, Prisma, Follower, Publisher } from '@prisma/client';
+import { User, Prisma, Follower } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -22,7 +22,7 @@ export class UserService {
     });
   }
 
-  async findFriends(id: string, extended = false): Promise<Follower[]> {
+  async findFriends(id: string, extended = false): Promise<User[]> {
     const follower = await this.prismaService.follower.findUnique({
       where: {
         userId: id,
@@ -45,13 +45,13 @@ export class UserService {
     });
 
     if (follower === null) {
-      return new Array<Follower>();
+      return [];
     }
 
-    return follower.friends;
+    return follower.friends.map((f) => f.user);
   }
 
-  async findPublishers(id: string, extended = false): Promise<Publisher[]> {
+  async findPublishers(id: string, extended = false): Promise<User[]> {
     const follower = await this.prismaService.follower.findUnique({
       where: {
         userId: id,
@@ -74,10 +74,10 @@ export class UserService {
     });
 
     if (follower === null) {
-      return new Array<Publisher>();
+      return [];
     }
 
-    return follower.following;
+    return follower.following.map((f) => f.user);
   }
 
   async findById(id: string): Promise<User> {

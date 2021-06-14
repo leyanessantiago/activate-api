@@ -1,7 +1,7 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { UserService } from './user.service';
-import { Follower, Publisher } from '.prisma/client';
-import { UserInfo } from '../auth/models/user-info';
+import { User } from '.prisma/client';
+import { IUserInfo } from '../auth/models/iuser-info';
 import { CurrentUser } from '../core/jwt/current-user.decorator';
 
 @Controller('users')
@@ -9,22 +9,22 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('friends')
-  async getFriends(@CurrentUser() user: UserInfo): Promise<Follower[]> {
+  async getFriends(@CurrentUser() user: IUserInfo): Promise<User[]> {
     return this.userService.findFriends(user.sub);
   }
 
   @Get('friends/:id')
-  async getFriendsById(@Param('id') id: string): Promise<Follower[]> {
+  async getFriendsById(@Param('id') id: string): Promise<User[]> {
     return this.userService.findFriends(id);
   }
 
   @Get('publishers')
-  async getPublishers(@CurrentUser() user: UserInfo): Promise<Publisher[]> {
+  async getPublishers(@CurrentUser() user: IUserInfo): Promise<User[]> {
     return this.userService.findPublishers(user.sub);
   }
 
   @Get('publishers/:id')
-  async getPublishersById(@Param('id') id: string): Promise<Publisher[]> {
+  async getPublishersById(@Param('id') id: string): Promise<User[]> {
     return this.userService.findPublishers(id);
   }
 }
