@@ -10,10 +10,12 @@ import { EventModule } from './event/event.module';
 import { ValidationPipe } from './core/validators/validation.pipe';
 // import { RateLimiterModule, RateLimiterInterceptor } from 'nestjs-rate-limiter';
 // import RateLimiterConfiguration from './core/constants/rate-limiter-configuration';
+import { UpcomingModule } from './upcoming/upcoming.module';
 
 @Module({
   imports: [
     UserModule,
+    UpcomingModule,
     AuthModule,
     EventModule,
     CategoryModule,
