@@ -19,7 +19,7 @@ model User {
   lastName		        String?	@db.VarChar(255)
   password		        String
   publisher		        Publisher?
-  follower		        Follower?
+  consumer		        Consumer?
   verificationLevel   Int @default(0)
   verificationCode    Int?
   avatar              String?
@@ -33,15 +33,15 @@ model User {
 
 model Publisher {
   events      Event[]    @relation(name: "EventAuthor")
-  followedBy  Follower[] @relation("PublisherFollows", references: [userId])
+  followers  Consumer[] @relation("Follower")
   user        User       @relation(fields: [userId], references: [id])
   userId      String     @id
 }
 
-model Follower {
-  following         Publisher[]     @relation("PublisherFollows", references: [userId])
-  friends           Follower[]      @relation(name: "FriendShip")
-  friendOf          Follower[]      @relation(name: "FriendShip")
+model Consumer {
+  following         Publisher[]     @relation("Follower")
+  friends           Consumer[]      @relation(name: "FriendShip")
+  friendOf          Consumer[]      @relation(name: "FriendShip")
   eventsFollowed    Event[]         @relation(name: "EventFollower")
   user              User            @relation(fields: [userId], references: [id])
   userId            String          @id
@@ -50,9 +50,9 @@ model Follower {
 }
 
 model FriendRequest {
-  creator       Follower @relation("SentRequests", fields: [creatorId], references: [userId])
+  creator       Consumer @relation("SentRequests", fields: [creatorId], references: [userId])
   creatorId     String
-  receiver      Follower @relation("ReceivedRequests", fields: [receiverId], references: [userId])
+  receiver      Consumer @relation("ReceivedRequests", fields: [receiverId], references: [userId])
   receiverId    String
   dateSent      DateTime @default(now())
 
@@ -81,7 +81,7 @@ model Event {
   categoryId    String
   author        Publisher  @relation(name: "EventAuthor", fields: [authorId], references: [userId])
   authorId      String
-  followers     Follower[] @relation(name: "EventFollower")
+  followers     Consumer[] @relation(name: "EventFollower")
   comments      Comment[]
   activities    Activity[]
 }

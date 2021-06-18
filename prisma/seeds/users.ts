@@ -16,7 +16,7 @@ const loginUser = {
 };
 
 export default async function seedUsers(prisma: PrismaClient) {
-  console.log('Seeding users (followers)');
+  console.log('Seeding users (consumers)');
 
   const users = new Array(30).fill(1).map(() => {
     const gender = faker.random.arrayElement(['male', 'female']);
@@ -51,7 +51,7 @@ export default async function seedUsers(prisma: PrismaClient) {
       create: user,
     });
 
-    await prisma.follower.create({
+    await prisma.consumer.create({
       data: {
         user: {
           connect: {

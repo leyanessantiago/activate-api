@@ -3,12 +3,12 @@ import {
   Publisher,
   Event,
   Comment,
-  Follower,
+  Consumer,
   Category,
 } from '@prisma/client';
 import * as faker from 'faker';
 
-function generateComments(eventDate: string | Date, users: Follower[]) {
+function generateComments(eventDate: string | Date, users: Consumer[]) {
   return new Array(faker.datatype.number({ min: 5, max: 15 }))
     .fill(1)
     .map(() => {
@@ -42,7 +42,7 @@ export default async function seedEvents(prisma: PrismaClient) {
   const publishers: Publisher[] = await prisma.publisher.findMany({
     include: { user: true },
   });
-  const users: Follower[] = await prisma.follower.findMany({
+  const users: Consumer[] = await prisma.consumer.findMany({
     include: { user: true },
   });
   const categories: Category[] = await prisma.category.findMany();

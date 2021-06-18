@@ -31,7 +31,7 @@ export class AuthService {
     };
 
     const user = await this.userService.create(updates);
-    await this.userService.createFollower({
+    await this.userService.createConsumer({
       user: { connect: { id: user.id } },
     });
     return this.getUserInfo(user);

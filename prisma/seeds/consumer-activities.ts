@@ -1,8 +1,8 @@
 import { PrismaClient } from '.prisma/client';
 import * as faker from 'faker';
 
-export default async function seedFollowerActivities(prisma: PrismaClient) {
-  console.log('Sedding follower related activities');
+export default async function seedConsumerActivities(prisma: PrismaClient) {
+  console.log('Sedding consumer related activities');
 
   const loginUser = await prisma.user.findUnique({
     where: {
@@ -10,7 +10,7 @@ export default async function seedFollowerActivities(prisma: PrismaClient) {
     },
     select: {
       id: true,
-      follower: {
+      consumer: {
         select: {
           following: {
             select: {
@@ -34,7 +34,7 @@ export default async function seedFollowerActivities(prisma: PrismaClient) {
   });
 
   const {
-    follower: { following, friends, receivedRequests },
+    consumer: { following, friends, receivedRequests },
   } = loginUser;
 
   const followedPublishers = following.map((pub) => ({

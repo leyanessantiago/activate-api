@@ -1,8 +1,8 @@
-export interface FollowerDTO {
+export interface UserDTO {
   id: string;
+  userName: string;
   name: string;
   lastName: string;
-  userName: string;
   avatar: string;
-  events: number;
+  active?: boolean;
 }

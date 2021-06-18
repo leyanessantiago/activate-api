@@ -1,18 +1,18 @@
 import {
   PrismaClient,
-  Follower,
+  Consumer,
   Publisher,
   FriendRequest,
 } from '@prisma/client';
 import * as faker from 'faker';
 
-export default async function seedFollowersRelations(prisma: PrismaClient) {
-  console.log('Seeding followers relationships');
+export default async function seedConsumerRelations(prisma: PrismaClient) {
+  console.log('Seeding consumer relationships');
 
   const publishers: Publisher[] = await prisma.publisher.findMany({
     include: { user: true },
   });
-  const friendsPool: Follower[] = await prisma.follower.findMany({
+  const friendsPool: Consumer[] = await prisma.consumer.findMany({
     include: { user: true },
   });
   let follower = friendsPool.shift();
@@ -43,12 +43,15 @@ export default async function seedFollowersRelations(prisma: PrismaClient) {
       .arrayElements(publishers)
       .map((pub) => ({ userId: pub.userId }));
 
-    await prisma.follower.update({
+    await prisma.consumer.update({
       where: {
         userId: follower.userId,
       },
       data: {
         friends: {
+          connect: friends,
+        },
+        friendOf: {
           connect: friends,
         },
         following: {

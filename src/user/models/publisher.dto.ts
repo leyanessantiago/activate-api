@@ -1,9 +1,7 @@
-export interface PublisherDTO {
-  id: string;
-  name: string;
-  lastName: string;
-  userName: string;
-  avatar: string;
+import { UserDTO } from './user.dto';
+
+export interface PublisherDTO extends UserDTO {
   events: number;
   followers: number;
+  followedByMe: boolean;
 }
