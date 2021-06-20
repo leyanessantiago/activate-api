@@ -1,6 +1,7 @@
 import { PrismaClient, User } from '@prisma/client';
 import * as faker from 'faker';
 import * as bcrypt from 'bcrypt';
+import { VerificationLevel } from '../../src/constants/user';
 
 const loginUser = {
   name: 'Alejandro',
@@ -10,7 +11,7 @@ const loginUser = {
   email: 'ale@gmail.com',
   avatar: 'user4',
   verificationCode: 123456,
-  verificationLevel: 3,
+  verificationLevel: VerificationLevel.INTERESTS_ADDED,
   theme: 'SummerVibes',
   useDarkStyle: true,
 };
@@ -31,13 +32,13 @@ export default async function seedUsers(prisma: PrismaClient) {
     const passwordHash = bcrypt.hashSync(password, 10);
 
     return {
+      avatar,
       lastName,
       name: firstName,
       password: passwordHash,
       userName: faker.internet.userName(firstName, lastName),
       email: faker.internet.email(firstName, lastName, 'gmail.com'),
-      avatar,
-      verificationLevel: 3,
+      verificationLevel: VerificationLevel.INTERESTS_ADDED,
       verificationCode: faker.datatype.number({ min: 100000, max: 999999 }),
     } as User;
   });

@@ -1,6 +1,5 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { UserService } from './user.service';
-import { User } from '.prisma/client';
 import { IUserInfo } from '../auth/models/iuser-info';
 import { CurrentUser } from '../core/jwt/current-user.decorator';
 import { PublisherDTO } from './models/publisher.dto';
@@ -13,27 +12,33 @@ export class UserController {
 
   @Get('friends')
   async getMyFriends(@CurrentUser() user: IUserInfo): Promise<UserDTO[]> {
-    return this.userService.findFriendsOf(user.sub);
-  }
-
-  @Get(':id/friends')
-  async getFriendsOf(@Param('id') userId: string): Promise<UserDTO[]> {
-    return this.userService.findFriendsOf(userId);
+    return this.userService.findMyFriends(user.sub);
   }
 
   @Get('publishers')
-  async getPublishersIFollow(@CurrentUser() user: IUserInfo): Promise<User[]> {
-    return this.userService.findPublishersFollowedBy(user.sub);
-  }
-
-  @Get(':id/publishers')
-  async getPublishersFollowedBy(@Param('id') userId: string): Promise<User[]> {
-    return this.userService.findPublishersFollowedBy(userId);
+  async getMyPublishers(@CurrentUser() user: IUserInfo): Promise<UserDTO[]> {
+    return this.userService.findMyPublishers(user.sub);
   }
 
   @Get('followers')
   async getMyFollowers(@CurrentUser() user: IUserInfo): Promise<UserDTO[]> {
     return this.userService.findMyFollowers(user.sub);
+  }
+
+  @Get(':id/friends')
+  async getFriendsOf(
+    @CurrentUser() user: IUserInfo,
+    @Param('id') userId: string,
+  ): Promise<ConsumerDTO[]> {
+    return this.userService.findFriendsOf(userId, user.sub);
+  }
+
+  @Get(':id/publishers')
+  async getPublishersFollowedBy(
+    @CurrentUser() user: IUserInfo,
+    @Param('id') userId: string,
+  ): Promise<PublisherDTO[]> {
+    return this.userService.findPublishersFollowedBy(userId, user.sub);
   }
 
   @Get(':id/followers')

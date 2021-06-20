@@ -1,7 +1,10 @@
 /*
   Warnings:
 
+  - You are about to drop the column `date` on the `Comment` table. All the data in the column will be lost.
   - You are about to drop the `Follower` table. If the table is not empty, all the data it contains will be lost.
+  - You are about to drop the `FriendRequest` table. If the table is not empty, all the data it contains will be lost.
+  - You are about to drop the `_FriendShip` table. If the table is not empty, all the data it contains will be lost.
   - You are about to drop the `_PublisherFollows` table. If the table is not empty, all the data it contains will be lost.
 
 */
@@ -32,8 +35,18 @@ ALTER TABLE "_PublisherFollows" DROP CONSTRAINT "_PublisherFollows_A_fkey";
 -- DropForeignKey
 ALTER TABLE "_PublisherFollows" DROP CONSTRAINT "_PublisherFollows_B_fkey";
 
+-- AlterTable
+ALTER TABLE "Comment" DROP COLUMN "date",
+ADD COLUMN     "dateResponded" TIMESTAMP(3);
+
 -- DropTable
 DROP TABLE "Follower";
+
+-- DropTable
+DROP TABLE "FriendRequest";
+
+-- DropTable
+DROP TABLE "_FriendShip";
 
 -- DropTable
 DROP TABLE "_PublisherFollows";
@@ -43,6 +56,17 @@ CREATE TABLE "Consumer" (
     "userId" TEXT NOT NULL,
 
     PRIMARY KEY ("userId")
+);
+
+-- CreateTable
+CREATE TABLE "Relationship" (
+    "userAId" TEXT NOT NULL,
+    "userBId" TEXT NOT NULL,
+    "status" INTEGER NOT NULL,
+    "updatedBy" TEXT NOT NULL,
+    "updateDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    PRIMARY KEY ("userAId","userBId")
 );
 
 -- CreateTable
@@ -61,22 +85,16 @@ CREATE INDEX "_Follower_B_index" ON "_Follower"("B");
 ALTER TABLE "Consumer" ADD FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "FriendRequest" ADD FOREIGN KEY ("creatorId") REFERENCES "Consumer"("userId") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Relationship" ADD FOREIGN KEY ("userAId") REFERENCES "Consumer"("userId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "FriendRequest" ADD FOREIGN KEY ("receiverId") REFERENCES "Consumer"("userId") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Relationship" ADD FOREIGN KEY ("userBId") REFERENCES "Consumer"("userId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_Follower" ADD FOREIGN KEY ("A") REFERENCES "Consumer"("userId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_Follower" ADD FOREIGN KEY ("B") REFERENCES "Publisher"("userId") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_FriendShip" ADD FOREIGN KEY ("A") REFERENCES "Consumer"("userId") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_FriendShip" ADD FOREIGN KEY ("B") REFERENCES "Consumer"("userId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_EventFollower" ADD FOREIGN KEY ("A") REFERENCES "Consumer"("userId") ON DELETE CASCADE ON UPDATE CASCADE;

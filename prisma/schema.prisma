@@ -32,31 +32,30 @@ model User {
 }
 
 model Publisher {
-  events      Event[]    @relation(name: "EventAuthor")
-  followers  Consumer[] @relation("Follower")
-  user        User       @relation(fields: [userId], references: [id])
   userId      String     @id
+  events      Event[]    @relation(name: "EventAuthor")
+  followers   Consumer[] @relation("Follower")
+  user        User       @relation(fields: [userId], references: [id])
 }
 
 model Consumer {
+  userId            String          @id
   following         Publisher[]     @relation("Follower")
-  friends           Consumer[]      @relation(name: "FriendShip")
-  friendOf          Consumer[]      @relation(name: "FriendShip")
   eventsFollowed    Event[]         @relation(name: "EventFollower")
   user              User            @relation(fields: [userId], references: [id])
-  userId            String          @id
-  sentRequests      FriendRequest[] @relation("SentRequests")
-  receivedRequests  FriendRequest[] @relation("ReceivedRequests")
+  relatives         Relationship[]  @relation("Relatives")
+  relatedTo         Relationship[]  @relation("RelatedTo")
 }
 
-model FriendRequest {
-  creator       Consumer @relation("SentRequests", fields: [creatorId], references: [userId])
-  creatorId     String
-  receiver      Consumer @relation("ReceivedRequests", fields: [receiverId], references: [userId])
-  receiverId    String
-  dateSent      DateTime @default(now())
-
-  @@id([creatorId, receiverId])
+model Relationship {
+  userA         Consumer @relation("Relatives", fields: [userAId], references: [userId])
+  userAId       String
+  userB         Consumer @relation("RelatedTo", fields: [userBId], references: [userId])
+  userBId       String
+  status        Int
+  updatedBy     String
+  updateDate    DateTime @default(now())
+  @@id([userAId, userBId])
 }
 
 model Category {

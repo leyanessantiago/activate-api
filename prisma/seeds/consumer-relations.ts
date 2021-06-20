@@ -2,9 +2,10 @@ import {
   PrismaClient,
   Consumer,
   Publisher,
-  FriendRequest,
+  Relationship,
 } from '@prisma/client';
 import * as faker from 'faker';
+import { RelationshipStatus } from '../../src/constants/user';
 
 export default async function seedConsumerRelations(prisma: PrismaClient) {
   console.log('Seeding consumer relationships');
@@ -12,16 +13,31 @@ export default async function seedConsumerRelations(prisma: PrismaClient) {
   const publishers: Publisher[] = await prisma.publisher.findMany({
     include: { user: true },
   });
-  const friendsPool: Consumer[] = await prisma.consumer.findMany({
+  const consumersPool: Consumer[] = await prisma.consumer.findMany({
     include: { user: true },
   });
-  let follower = friendsPool.shift();
+  let consumer = consumersPool.shift();
 
-  while (friendsPool.length > 0) {
+  while (consumersPool.length > 0) {
+    const following = faker.random
+      .arrayElements(publishers)
+      .map((pub) => ({ userId: pub.userId }));
+
+    await prisma.consumer.update({
+      where: {
+        userId: consumer.userId,
+      },
+      data: {
+        following: {
+          connect: following,
+        },
+      },
+    });
+
     const startAtFront = faker.datatype.boolean();
     const friendsCount = faker.datatype.number({
       min: 0,
-      max: friendsPool.length - 1,
+      max: consumersPool.length - 1,
     });
 
     let friendsSlice = [];
@@ -29,48 +45,34 @@ export default async function seedConsumerRelations(prisma: PrismaClient) {
 
     if (friendsCount > 0) {
       friendsSlice = startAtFront
-        ? friendsPool.slice(0, friendsCount)
-        : friendsPool.slice(friendsCount);
+        ? consumersPool.slice(0, friendsCount)
+        : consumersPool.slice(friendsCount);
 
       requestsSlice = startAtFront
-        ? friendsPool.slice(friendsCount)
-        : friendsPool.slice(0, friendsCount);
+        ? consumersPool.slice(friendsCount)
+        : consumersPool.slice(0, friendsCount);
+
+      const friendRelations: Relationship[] = friendsSlice.map((friend) => ({
+        userAId: consumer.userId,
+        userBId: friend.userId,
+        updatedBy: consumer.userId,
+        updateDate: new Date(),
+        status: RelationshipStatus.ACCEPTED,
+      }));
+
+      const friendRequests: Relationship[] = requestsSlice.map((fr) => ({
+        userAId: fr.userId,
+        userBId: consumer.userId,
+        updatedBy: fr.userId,
+        updateDate: new Date(),
+        status: RelationshipStatus.PENDING,
+      }));
+
+      await prisma.relationship.createMany({
+        data: [...friendRequests, ...friendRelations],
+      });
     }
 
-    const friends = friendsSlice.map((fr) => ({ userId: fr.userId }));
-
-    const following = faker.random
-      .arrayElements(publishers)
-      .map((pub) => ({ userId: pub.userId }));
-
-    await prisma.consumer.update({
-      where: {
-        userId: follower.userId,
-      },
-      data: {
-        friends: {
-          connect: friends,
-        },
-        friendOf: {
-          connect: friends,
-        },
-        following: {
-          connect: following,
-        },
-      },
-    });
-
-    const friendRequests: FriendRequest[] = requestsSlice.map((fr) => ({
-      creatorId: fr.userId,
-      receiverId: follower.userId,
-      dateSent: faker.date.past(0, new Date()),
-    }));
-
-    await prisma.friendRequest.createMany({
-      data: friendRequests,
-      skipDuplicates: true,
-    });
-
-    follower = friendsPool.shift();
+    consumer = consumersPool.shift();
   }
 }
