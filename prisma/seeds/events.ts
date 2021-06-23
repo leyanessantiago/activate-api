@@ -15,16 +15,16 @@ function generateComments(eventDate: string | Date, users: Consumer[]) {
       const author = users[faker.datatype.number({ min: 0, max: 29 })];
       const hasResponse = faker.datatype.boolean();
       const response = hasResponse ? faker.lorem.lines(4) : undefined;
-      const dateResponded = hasResponse
+      const respondedOn = hasResponse
         ? faker.date.past(0, eventDate)
         : undefined;
 
       return {
         authorId: author.userId,
         content: faker.lorem.lines(4),
-        dateCreated: faker.date.past(0, eventDate),
+        createdOn: faker.date.past(0, eventDate),
         response,
-        dateResponded,
+        respondedOn,
       } as Comment;
     });
 }

@@ -11,3 +11,9 @@ export enum RelationshipStatus {
   DECLINED,
   BLOCKED,
 }
+
+export enum FollowerStatus {
+  FOLLOWING,
+  MUTED,
+  BLOCKED,
+}

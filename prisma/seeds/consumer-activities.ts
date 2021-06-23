@@ -15,7 +15,11 @@ export default async function seedConsumerActivities(prisma: PrismaClient) {
         select: {
           following: {
             select: {
-              userId: true,
+              publisher: {
+                select: {
+                  userId: true,
+                },
+              },
             },
           },
         },
@@ -59,8 +63,8 @@ export default async function seedConsumerActivities(prisma: PrismaClient) {
   const followedPublishers = following.map((pub) => ({
     type: 4,
     creatorId: loginUser.id,
-    receiverId: pub.userId,
-    dateSent: faker.date.past(0, new Date()),
+    receiverId: pub.publisher.userId,
+    sentOn: faker.date.past(0, new Date()),
     seen: faker.datatype.boolean(),
   }));
 
@@ -68,7 +72,7 @@ export default async function seedConsumerActivities(prisma: PrismaClient) {
     type: 5,
     creatorId: req.userAId,
     receiverId: loginUser.id,
-    dateSent: faker.date.past(0, new Date()),
+    sentOn: faker.date.past(0, new Date()),
     seen: faker.datatype.boolean(),
   }));
 
@@ -76,7 +80,7 @@ export default async function seedConsumerActivities(prisma: PrismaClient) {
     type: 6,
     creatorId: friend?.userAId || friend?.userBId,
     receiverId: loginUser.id,
-    dateSent: faker.date.past(0, new Date()),
+    sentOn: faker.date.past(0, new Date()),
     seen: faker.datatype.boolean(),
   }));
 
@@ -88,7 +92,7 @@ export default async function seedConsumerActivities(prisma: PrismaClient) {
     eventId: faker.random.arrayElement(
       (friend.userA || friend.userB).eventsFollowed,
     ).id,
-    dateSent: faker.date.past(0, new Date()),
+    sentOn: faker.date.past(0, new Date()),
     seen: faker.datatype.boolean(),
   }));
 

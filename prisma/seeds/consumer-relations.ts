@@ -3,9 +3,10 @@ import {
   Consumer,
   Publisher,
   Relationship,
+  Follower,
 } from '@prisma/client';
 import * as faker from 'faker';
-import { RelationshipStatus } from '../../src/constants/user';
+import { FollowerStatus, RelationshipStatus } from '../../src/constants/user';
 
 export default async function seedConsumerRelations(prisma: PrismaClient) {
   console.log('Seeding consumer relationships');
@@ -19,19 +20,19 @@ export default async function seedConsumerRelations(prisma: PrismaClient) {
   let consumer = consumersPool.shift();
 
   while (consumersPool.length > 0) {
-    const following = faker.random
+    const following: Follower[] = faker.random
       .arrayElements(publishers)
-      .map((pub) => ({ userId: pub.userId }));
+      .map((pub) => ({
+        publisherId: pub.userId,
+        consumerId: consumer.userId,
+        updatedBy: consumer.userId,
+        status: FollowerStatus.FOLLOWING,
+        createdOn: faker.date.past(0, new Date()),
+        updatedOn: faker.date.past(0, new Date()),
+      }));
 
-    await prisma.consumer.update({
-      where: {
-        userId: consumer.userId,
-      },
-      data: {
-        following: {
-          connect: following,
-        },
-      },
+    await prisma.follower.createMany({
+      data: following,
     });
 
     const startAtFront = faker.datatype.boolean();
@@ -56,16 +57,18 @@ export default async function seedConsumerRelations(prisma: PrismaClient) {
         userAId: consumer.userId,
         userBId: friend.userId,
         updatedBy: consumer.userId,
-        updateDate: new Date(),
         status: RelationshipStatus.ACCEPTED,
+        createdOn: faker.date.past(0, new Date()),
+        updatedOn: faker.date.past(0, new Date()),
       }));
 
       const friendRequests: Relationship[] = requestsSlice.map((fr) => ({
         userAId: fr.userId,
         userBId: consumer.userId,
         updatedBy: fr.userId,
-        updateDate: new Date(),
         status: RelationshipStatus.PENDING,
+        createdOn: faker.date.past(0, new Date()),
+        updatedOn: faker.date.past(0, new Date()),
       }));
 
       await prisma.relationship.createMany({

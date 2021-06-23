@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { User, Prisma, Consumer } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConsumerDTO } from './models/consumer.dto';
 import { PublisherDTO } from './models/publisher.dto';
 import { UserDTO } from './models/user.dto';
-import { RelationshipStatus } from '../constants/user';
+import { FollowerStatus, RelationshipStatus } from '../constants/user';
+import { ApiException } from 'src/core/exceptions/api-exception';
 
 @Injectable()
 export class UserService {
@@ -27,13 +28,13 @@ export class UserService {
   }
 
   async findMyPublishers(currentUser: string): Promise<UserDTO[]> {
-    const consumer = await this.prismaService.consumer.findUnique({
+    const followers = await this.prismaService.follower.findMany({
       where: {
-        userId: currentUser,
+        consumerId: currentUser,
       },
-      include: {
-        following: {
-          include: {
+      select: {
+        publisher: {
+          select: {
             user: {
               select: {
                 id: true,
@@ -48,23 +49,19 @@ export class UserService {
       },
     });
 
-    if (consumer === null) {
-      return [];
-    }
-
-    return consumer.following.map((f) => f.user);
+    return followers.map((f) => f.publisher.user);
   }
 
   async findPublishersFollowedBy(
     userId: string,
     currentUser: string,
   ): Promise<PublisherDTO[]> {
-    const consumer = await this.prismaService.consumer.findUnique({
+    const following = await this.prismaService.follower.findMany({
       where: {
-        userId,
+        consumerId: userId,
       },
       select: {
-        following: {
+        publisher: {
           select: {
             user: {
               select: {
@@ -77,7 +74,7 @@ export class UserService {
             },
             followers: {
               where: {
-                userId: currentUser,
+                consumerId: currentUser,
               },
             },
           },
@@ -85,11 +82,7 @@ export class UserService {
       },
     });
 
-    if (consumer === null) {
-      return [];
-    }
-
-    return consumer.following.map(({ user, followers }) => ({
+    return following.map(({ publisher: { user, followers } }) => ({
       ...user,
       events: undefined,
       followers: undefined,
@@ -98,12 +91,12 @@ export class UserService {
   }
 
   async findMyFollowers(id: string): Promise<UserDTO[]> {
-    const publisher = await this.prismaService.publisher.findUnique({
+    const followers = await this.prismaService.follower.findMany({
       where: {
-        userId: id,
+        publisherId: id,
       },
       select: {
-        followers: {
+        consumer: {
           select: {
             user: {
               select: {
@@ -119,36 +112,30 @@ export class UserService {
       },
     });
 
-    if (!publisher) {
-      return [];
-    }
-
-    return publisher.followers.map((f) => f.user);
+    return followers.map((f) => f.consumer.user);
   }
 
   async findFollowersOf(
     id: string,
     currentUser: string,
   ): Promise<ConsumerDTO[]> {
-    const publisher = await this.prismaService.publisher.findUnique({
+    const followers = await this.prismaService.follower.findMany({
       where: {
-        userId: id,
+        publisherId: id,
+        consumerId: {
+          not: currentUser,
+        },
       },
       select: {
-        followers: {
-          where: {
-            userId: {
-              not: currentUser,
-            },
-          },
+        consumer: {
           select: {
             user: {
               select: {
                 id: true,
                 name: true,
                 lastName: true,
-                avatar: true,
                 userName: true,
+                avatar: true,
               },
             },
             relatives: {
@@ -168,12 +155,10 @@ export class UserService {
       },
     });
 
-    if (!publisher) {
-      return [];
-    }
-
-    return publisher.followers.map((follower) => {
-      const { user, relatives, relatedTo } = follower;
+    return followers.map((follower) => {
+      const {
+        consumer: { user, relatives, relatedTo },
+      } = follower;
       const isMyFriend = relatives?.length > 0 || relatedTo?.length > 0;
 
       return {
@@ -358,7 +343,7 @@ export class UserService {
         },
         followers: {
           where: {
-            userId: currentUser,
+            consumerId: currentUser,
           },
         },
         _count: {
@@ -443,17 +428,29 @@ export class UserService {
     } as ConsumerDTO;
   }
 
-  async follow(userId: string, publisherId: string) {
-    return this.prismaService.consumer.update({
+  async follow(currentUser: string, publisherId: string) {
+    const relation = await this.prismaService.follower.findUnique({
       where: {
-        userId,
-      },
-      data: {
-        following: {
-          connect: {
-            userId: publisherId,
-          },
+        consumerId_publisherId: {
+          consumerId: currentUser,
+          publisherId: publisherId,
         },
+      },
+    });
+
+    if (!!relation) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'You already follow this publisher',
+      );
+    }
+
+    return this.prismaService.follower.create({
+      data: {
+        consumerId: currentUser,
+        publisherId: publisherId,
+        updatedBy: currentUser,
+        status: FollowerStatus.FOLLOWING,
       },
     });
   }

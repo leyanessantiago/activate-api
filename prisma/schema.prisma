@@ -33,14 +33,26 @@ model User {
 
 model Publisher {
   userId      String     @id
-  events      Event[]    @relation(name: "EventAuthor")
-  followers   Consumer[] @relation("Follower")
   user        User       @relation(fields: [userId], references: [id])
+  events      Event[]    @relation(name: "EventAuthor")
+  followers   Follower[]
+}
+
+model Follower {
+  consumerId    String
+  consumer      Consumer @relation(fields: [consumerId], references: [userId])
+  publisherId   String
+  publisher     Publisher @relation(fields: [publisherId], references: [userId])
+  status        Int
+  updatedBy     String
+  createdOn     DateTime @default(now())
+  updatedOn     DateTime @default(now())
+  @@id([consumerId, publisherId])
 }
 
 model Consumer {
   userId            String          @id
-  following         Publisher[]     @relation("Follower")
+  following         Follower[]
   eventsFollowed    Event[]         @relation(name: "EventFollower")
   user              User            @relation(fields: [userId], references: [id])
   relatives         Relationship[]  @relation("Relatives")
@@ -54,7 +66,8 @@ model Relationship {
   userBId       String
   status        Int
   updatedBy     String
-  updateDate    DateTime @default(now())
+  createdOn     DateTime @default(now())
+  updatedOn     DateTime @default(now())
   @@id([userAId, userBId])
 }
 
@@ -93,8 +106,8 @@ model Comment {
   authorId      String
   event         Event    @relation(fields: [eventId], references: [id])
   eventId       String
-  dateCreated   DateTime @default(now())
-  dateResponded DateTime?
+  createdOn     DateTime @default(now())
+  respondedOn   DateTime?
   activity      Activity[]
 }
 
@@ -110,7 +123,7 @@ model Activity {
   comment     Comment?   @relation(fields: [commentId], references: [id])
   commentId   String?
   seen        Boolean?  @default(false)
-  dateSent    DateTime  @default(now())
+  sentOn      DateTime  @default(now())
 }
 
 model UserInterests {
