@@ -2,7 +2,7 @@ import { PrismaClient } from '.prisma/client';
 import * as faker from 'faker';
 
 export default async function seedEventActivities(prisma: PrismaClient) {
-  console.log('Sedding event related activities');
+  console.log('Seeding event related activities');
 
   const events = await prisma.event.findMany({
     select: {
@@ -31,7 +31,7 @@ export default async function seedEventActivities(prisma: PrismaClient) {
       creatorId: follower.userId,
       receiverId: event.authorId,
       eventId: event.id,
-      dateSent: faker.date.past(0, new Date()),
+      sentOn: faker.date.past(0, new Date()),
       seen: faker.datatype.boolean(),
     }));
 
@@ -40,7 +40,7 @@ export default async function seedEventActivities(prisma: PrismaClient) {
       creatorId: event.authorId,
       receiverId: follower.userId,
       eventId: event.id,
-      dateSent: faker.date.past(0, new Date()),
+      sentOn: faker.date.past(0, new Date()),
       seen: faker.datatype.boolean(),
     }));
 
@@ -50,7 +50,7 @@ export default async function seedEventActivities(prisma: PrismaClient) {
       receiverId: event.authorId,
       eventId: event.id,
       commentId: comment.id,
-      dateSent: faker.date.past(0, new Date()),
+      sentOn: faker.date.past(0, new Date()),
       seen: faker.datatype.boolean(),
     }));
 
@@ -62,7 +62,7 @@ export default async function seedEventActivities(prisma: PrismaClient) {
         receiverId: comment.authorId,
         eventId: event.id,
         commentId: comment.id,
-        dateSent: faker.date.past(0, new Date()),
+        sentOn: faker.date.past(0, new Date()),
         seen: faker.datatype.boolean(),
       }));
 
