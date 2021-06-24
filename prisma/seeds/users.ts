@@ -4,8 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { VerificationLevel } from '../../src/constants/user';
 
 const loginUser = {
-  name: 'Alejandro',
-  lastName: 'Yanes',
+  name: 'Alejandro Yanes',
   userName: 'alejandro.yanes94',
   password: bcrypt.hashSync('Aa12345!!', 10),
   email: 'ale@gmail.com',
@@ -23,6 +22,9 @@ export default async function seedUsers(prisma: PrismaClient) {
     const gender = faker.random.arrayElement(['male', 'female']);
     const firstName = faker.name.firstName(gender as any);
     const lastName = faker.name.lastName(gender as any);
+    const userName = faker.internet
+      .userName(firstName, lastName)
+      .toLocaleLowerCase();
     const avatar =
       gender === 'female'
         ? faker.random.arrayElement(['user1', 'user2'])
@@ -33,10 +35,9 @@ export default async function seedUsers(prisma: PrismaClient) {
 
     return {
       avatar,
-      lastName,
-      name: firstName,
+      userName,
+      name: `${firstName} ${lastName}`,
       password: passwordHash,
-      userName: faker.internet.userName(firstName, lastName),
       email: faker.internet.email(firstName, lastName, 'gmail.com'),
       verificationLevel: VerificationLevel.INTERESTS_ADDED,
       verificationCode: faker.datatype.number({ min: 100000, max: 999999 }),
@@ -46,10 +47,8 @@ export default async function seedUsers(prisma: PrismaClient) {
   const extendedUsers = [loginUser, ...users];
 
   for (const user of extendedUsers) {
-    const dbUser = await prisma.user.upsert({
-      where: { email: user.email },
-      update: {},
-      create: user,
+    const dbUser = await prisma.user.create({
+      data: user,
     });
 
     await prisma.consumer.create({

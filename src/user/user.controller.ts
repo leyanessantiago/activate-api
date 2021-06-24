@@ -10,6 +10,11 @@ import { UserDTO } from './models/user.dto';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @Get('stats')
+  async getMyStats(@CurrentUser() user: IUserInfo) {
+    return this.userService.findMyStats(user.sub);
+  }
+
   @Get('friends')
   async getMyFriends(@CurrentUser() user: IUserInfo): Promise<UserDTO[]> {
     return this.userService.findMyFriends(user.sub);

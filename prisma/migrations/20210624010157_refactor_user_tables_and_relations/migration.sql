@@ -4,6 +4,7 @@
   - You are about to drop the column `userId` on the `Activity` table. All the data in the column will be lost.
   - You are about to drop the column `date` on the `Comment` table. All the data in the column will be lost.
   - You are about to drop the column `isPublisher` on the `User` table. All the data in the column will be lost.
+  - You are about to drop the column `lastName` on the `User` table. All the data in the column will be lost.
   - You are about to drop the column `userId` on the `User` table. All the data in the column will be lost.
   - You are about to drop the `_EventFollowers` table. If the table is not empty, all the data it contains will be lost.
   - You are about to drop the `_UserFollows` table. If the table is not empty, all the data it contains will be lost.
@@ -47,6 +48,7 @@ ADD COLUMN     "respondedOn" TIMESTAMP(3);
 
 -- AlterTable
 ALTER TABLE "User" DROP COLUMN "isPublisher",
+DROP COLUMN "lastName",
 DROP COLUMN "userId",
 ADD COLUMN     "avatar" TEXT,
 ADD COLUMN     "theme" TEXT,
@@ -54,8 +56,7 @@ ADD COLUMN     "useDarkStyle" BOOLEAN,
 ADD COLUMN     "verificationCode" INTEGER,
 ADD COLUMN     "verificationLevel" INTEGER NOT NULL DEFAULT 0,
 ALTER COLUMN "userName" DROP NOT NULL,
-ALTER COLUMN "name" DROP NOT NULL,
-ALTER COLUMN "lastName" DROP NOT NULL;
+ALTER COLUMN "name" DROP NOT NULL;
 
 -- DropTable
 DROP TABLE "_EventFollowers";

@@ -24,16 +24,13 @@ export class AuthService {
   async signUp(signUp: SignUpDto): Promise<IUserInfo | null> {
     const passwordHash = await bcrypt.hash(signUp.password, this.salt);
 
-    const updates: Prisma.UserCreateInput = {
+    const userData: Prisma.UserCreateInput = {
       email: signUp.email,
       password: passwordHash,
       verificationCode: Math.floor(100000 + Math.random() * 900000),
     };
 
-    const user = await this.userService.create(updates);
-    await this.userService.createConsumer({
-      user: { connect: { id: user.id } },
-    });
+    const { user } = await this.userService.createConsumer(userData);
     return this.getUserInfo(user);
   }
 
@@ -157,7 +154,6 @@ export class AuthService {
       email,
       userName,
       name,
-      lastName,
       avatar,
       theme,
       useDarkStyle,
@@ -172,7 +168,6 @@ export class AuthService {
       email,
       userName,
       name,
-      lastName,
       avatar,
       theme,
       useDarkStyle,

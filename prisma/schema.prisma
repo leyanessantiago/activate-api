@@ -16,7 +16,6 @@ model User {
   userName		        String?	@unique @db.VarChar(255)
   email			          String	@unique
   name			          String?	@db.VarChar(255)
-  lastName		        String?	@db.VarChar(255)
   password		        String
   publisher		        Publisher?
   consumer		        Consumer?

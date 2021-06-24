@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { User, Prisma, Consumer } from '@prisma/client';
+import { User, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConsumerDTO } from './models/consumer.dto';
 import { PublisherDTO } from './models/publisher.dto';
@@ -39,7 +39,6 @@ export class UserService {
               select: {
                 id: true,
                 name: true,
-                lastName: true,
                 avatar: true,
                 userName: true,
               },
@@ -67,7 +66,6 @@ export class UserService {
               select: {
                 id: true,
                 name: true,
-                lastName: true,
                 avatar: true,
                 userName: true,
               },
@@ -102,7 +100,6 @@ export class UserService {
               select: {
                 id: true,
                 name: true,
-                lastName: true,
                 userName: true,
                 avatar: true,
               },
@@ -133,7 +130,6 @@ export class UserService {
               select: {
                 id: true,
                 name: true,
-                lastName: true,
                 userName: true,
                 avatar: true,
               },
@@ -163,6 +159,8 @@ export class UserService {
 
       return {
         ...user,
+        following: undefined,
+        friends: undefined,
         myFriend: isMyFriend,
       } as ConsumerDTO;
     });
@@ -183,7 +181,6 @@ export class UserService {
               select: {
                 id: true,
                 name: true,
-                lastName: true,
                 avatar: true,
                 userName: true,
               },
@@ -196,7 +193,6 @@ export class UserService {
               select: {
                 id: true,
                 name: true,
-                lastName: true,
                 avatar: true,
                 userName: true,
               },
@@ -238,7 +234,6 @@ export class UserService {
               select: {
                 id: true,
                 name: true,
-                lastName: true,
                 avatar: true,
                 userName: true,
               },
@@ -263,7 +258,6 @@ export class UserService {
               select: {
                 id: true,
                 name: true,
-                lastName: true,
                 avatar: true,
                 userName: true,
               },
@@ -314,7 +308,6 @@ export class UserService {
       select: {
         id: true,
         name: true,
-        lastName: true,
         avatar: true,
         userName: true,
       },
@@ -336,7 +329,6 @@ export class UserService {
           select: {
             id: true,
             name: true,
-            lastName: true,
             avatar: true,
             userName: true,
           },
@@ -383,7 +375,6 @@ export class UserService {
           select: {
             id: true,
             name: true,
-            lastName: true,
             avatar: true,
             userName: true,
           },
@@ -428,6 +419,23 @@ export class UserService {
     } as ConsumerDTO;
   }
 
+  async findMyStats(userId: string) {
+    const friendsCount = await this.prismaService.relationship.count({
+      where: {
+        OR: [{ userAId: userId }, { userBId: userId }],
+        AND: [{ status: RelationshipStatus.ACCEPTED }],
+      },
+    });
+
+    const followingCount = await this.prismaService.follower.count({
+      where: {
+        consumerId: userId,
+      },
+    });
+
+    return { friends: friendsCount, following: followingCount };
+  }
+
   async follow(currentUser: string, publisherId: string) {
     const relation = await this.prismaService.follower.findUnique({
       where: {
@@ -461,12 +469,16 @@ export class UserService {
     });
   }
 
-  async createConsumer(
-    follower: Prisma.ConsumerCreateInput,
-  ): Promise<(Consumer & { user: User }) | null> {
+  async createConsumer(userData: Prisma.UserCreateInput) {
+    const user = await this.prismaService.user.create({
+      data: userData,
+    });
+
     return await this.prismaService.consumer.create({
-      data: follower,
-      include: {
+      data: {
+        userId: user.id,
+      },
+      select: {
         user: true,
       },
     });
