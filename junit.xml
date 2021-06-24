@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="11" failures="0" errors="0" time="14.457">
+  <testsuite name="src/event/event.controller.spec.ts" errors="0" failures="0" skipped="0" timestamp="2021-06-24T02:31:41" time="1.994" tests="1">
+    <testcase classname="EventController - should be defined" name="EventController - should be defined" time="0.02">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/category/category.controller.spec.ts" errors="0" failures="0" skipped="0" timestamp="2021-06-24T02:31:41" time="2.393" tests="1">
+    <testcase classname="CategoryController - should be defined" name="CategoryController - should be defined" time="0.014">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/interests/interests.controller.spec.ts" errors="0" failures="0" skipped="0" timestamp="2021-06-24T02:31:41" time="2.55" tests="1">
+    <testcase classname="UserInterestsController - should be defined" name="UserInterestsController - should be defined" time="0.021">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/category/category.service.spec.ts" errors="0" failures="0" skipped="0" timestamp="2021-06-24T02:31:43" time="0.69" tests="1">
+    <testcase classname="CategoryService - should be defined" name="CategoryService - should be defined" time="0.008">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/event/event.service.spec.ts" errors="0" failures="0" skipped="0" timestamp="2021-06-24T02:31:44" time="0.707" tests="1">
+    <testcase classname="EventService - should be defined" name="EventService - should be defined" time="0.006">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/interests/interests.service.spec.ts" errors="0" failures="0" skipped="0" timestamp="2021-06-24T02:31:44" time="0.586" tests="1">
+    <testcase classname="UserInterestsService - should be defined" name="UserInterestsService - should be defined" time="0.006">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/prisma/prisma.service.spec.ts" errors="0" failures="0" skipped="0" timestamp="2021-06-24T02:31:44" time="0.663" tests="1">
+    <testcase classname="PrismaService - should be defined" name="PrismaService - should be defined" time="0.05">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/user/user.service.spec.ts" errors="0" failures="0" skipped="0" timestamp="2021-06-24T02:31:45" time="8.336" tests="1">
+    <testcase classname="UserService - should be defined" name="UserService - should be defined" time="0.007">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/user/user.controller.spec.ts" errors="0" failures="0" skipped="0" timestamp="2021-06-24T02:31:45" time="8.435" tests="1">
+    <testcase classname="UserController - should be defined" name="UserController - should be defined" time="0.008">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/auth/auth.service.spec.ts" errors="0" failures="0" skipped="0" timestamp="2021-06-24T02:31:45" time="8.264" tests="1">
+    <testcase classname="AuthService - should be defined" name="AuthService - should be defined" time="0.006">
+    </testcase>
+  </testsuite>
+  <testsuite name="src/auth/auth.controller.spec.ts" errors="0" failures="0" skipped="0" timestamp="2021-06-24T02:31:53" time="0.923" tests="1">
+    <testcase classname="AuthController - should be defined" name="AuthController - should be defined" time="0.006">
+    </testcase>
+  </testsuite>
+</testsuites>

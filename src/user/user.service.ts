@@ -5,7 +5,7 @@ import { ConsumerDTO } from './models/consumer.dto';
 import { PublisherDTO } from './models/publisher.dto';
 import { UserDTO } from './models/user.dto';
 import { FollowerStatus, RelationshipStatus } from '../constants/user';
-import { ApiException } from 'src/core/exceptions/api-exception';
+import { ApiException } from '../core/exceptions/api-exception';
 
 @Injectable()
 export class UserService {
