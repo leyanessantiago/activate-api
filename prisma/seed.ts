@@ -3,9 +3,9 @@ import seedUsers from './seeds/users';
 import seedPublishers from './seeds/publishers';
 import seedCategories from './seeds/categories';
 import seedEvents from './seeds/events';
-import seedFollowersRelations from './seeds/followers-relations';
+import seedConsumerRelations from './seeds/consumer-relations';
 import seedEventActivities from './seeds/event-activities';
-import seedFollowerActivities from './seeds/follower-activities';
+import seedConsumerActivities from './seeds/consumer-activities';
 
 const prisma = new PrismaClient();
 
@@ -15,8 +15,8 @@ async function main() {
   await seedPublishers(prisma);
   await seedCategories(prisma);
   await seedEvents(prisma);
-  await seedFollowersRelations(prisma);
-  await seedFollowerActivities(prisma);
+  await seedConsumerRelations(prisma);
+  await seedConsumerActivities(prisma);
   await seedEventActivities(prisma);
 }
 

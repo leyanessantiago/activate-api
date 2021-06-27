@@ -1,6 +1,7 @@
 import { PrismaClient, User } from '@prisma/client';
 import * as faker from 'faker';
 import * as bcrypt from 'bcrypt';
+import { VerificationLevel } from '../../src/constants/user';
 
 export default async function seedPublishers(prisma: PrismaClient) {
   console.log('Seeding users (publishers)');
@@ -9,6 +10,9 @@ export default async function seedPublishers(prisma: PrismaClient) {
     const gender = faker.random.arrayElement(['male', 'female']);
     const firstName = faker.name.firstName(gender as any);
     const lastName = faker.name.lastName(gender as any);
+    const userName = faker.internet
+      .userName(firstName, lastName)
+      .toLocaleLowerCase();
     const avatar =
       gender === 'female'
         ? faker.random.arrayElement(['user1', 'user2'])
@@ -18,22 +22,19 @@ export default async function seedPublishers(prisma: PrismaClient) {
     const passwordHash = bcrypt.hashSync(password, 10);
 
     return {
-      lastName,
-      name: firstName,
-      password: passwordHash,
-      userName: faker.internet.userName(firstName, lastName),
-      email: faker.internet.email(firstName, lastName, 'gmail.com'),
       avatar,
-      verificationLevel: 3,
+      userName,
+      name: `${firstName} ${lastName}`,
+      password: passwordHash,
+      email: faker.internet.email(firstName, lastName, 'gmail.com'),
+      verificationLevel: VerificationLevel.INTERESTS_ADDED,
       verificationCode: faker.datatype.number({ min: 100000, max: 999999 }),
     } as User;
   });
 
   for (const user of users) {
-    const dbUser = await prisma.user.upsert({
-      where: { email: user.email },
-      update: {},
-      create: user,
+    const dbUser = await prisma.user.create({
+      data: user,
     });
 
     await prisma.publisher.create({

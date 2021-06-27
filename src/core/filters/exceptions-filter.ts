@@ -35,6 +35,8 @@ export class ExceptionsFilter implements ExceptionFilter {
         .status(exception.statusCode)
         .json(ApiResponse.Fail(exception.statusCode, exception.message));
     } else {
+      console.log(exception);
+
       const status =
         exception instanceof HttpException
           ? exception.getStatus()

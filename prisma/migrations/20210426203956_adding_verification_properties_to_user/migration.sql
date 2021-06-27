@@ -1,7 +1,0 @@
--- AlterTable
-ALTER TABLE "User" ADD COLUMN     "isVerified" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "verficationCode" TEXT,
-ADD COLUMN     "avatarUrl" TEXT,
-ALTER COLUMN "userName" DROP NOT NULL,
-ALTER COLUMN "name" DROP NOT NULL,
-ALTER COLUMN "lastName" DROP NOT NULL;
