@@ -5,6 +5,7 @@ import { ConsumerDTO } from './models/consumer.dto';
 import { PublisherDTO } from './models/publisher.dto';
 import { UserDTO } from './models/user.dto';
 import { FollowerStatus, RelationshipStatus } from '../constants/user';
+import { ActivityType } from '../constants/activities';
 import { ApiException } from '../core/exceptions/api-exception';
 
 @Injectable()
@@ -14,7 +15,7 @@ export class UserService {
   async findByEmail(email: string): Promise<User | undefined> {
     return this.prismaService.user.findUnique({
       where: {
-        email: email,
+        email,
       },
     });
   }
@@ -22,17 +23,21 @@ export class UserService {
   async findByUserName(userName: string): Promise<User | undefined> {
     return this.prismaService.user.findUnique({
       where: {
-        userName: userName,
+        userName,
       },
     });
   }
 
-  async findMyPublishers(currentUser: string): Promise<UserDTO[]> {
-    const followers = await this.prismaService.follower.findMany({
+  async findMyPublishers(currentUser: string): Promise<PublisherDTO[]> {
+    const results = await this.prismaService.follower.findMany({
       where: {
         consumerId: currentUser,
+        AND: {
+          status: { not: FollowerStatus.BLOCKED },
+        },
       },
       select: {
+        status: true,
         publisher: {
           select: {
             user: {
@@ -48,7 +53,19 @@ export class UserService {
       },
     });
 
-    return followers.map((f) => f.publisher.user);
+    return results.map((entry) => {
+      const {
+        publisher: { user },
+        status,
+      } = entry;
+
+      return {
+        ...user,
+        followers: undefined,
+        events: undefined,
+        followerStatus: status,
+      } as PublisherDTO;
+    });
   }
 
   async findPublishersFollowedBy(
@@ -58,6 +75,16 @@ export class UserService {
     const following = await this.prismaService.follower.findMany({
       where: {
         consumerId: userId,
+        // publisher: {
+        //   followers: {
+        //     some: {
+        //       consumerId: currentUser,
+        //       AND: {
+        //         status: { not: FollowerStatus.BLOCKED },
+        //       },
+        //     },
+        //   },
+        // },
       },
       select: {
         publisher: {
@@ -74,6 +101,9 @@ export class UserService {
               where: {
                 consumerId: currentUser,
               },
+              select: {
+                status: true,
+              },
             },
           },
         },
@@ -84,7 +114,10 @@ export class UserService {
       ...user,
       events: undefined,
       followers: undefined,
-      followedByMe: followers.length > 0,
+      followerStatus:
+        followers && followers.length > 0
+          ? followers[0].status
+          : FollowerStatus.UNRELATED,
     }));
   }
 
@@ -113,12 +146,12 @@ export class UserService {
   }
 
   async findFollowersOf(
-    id: string,
     currentUser: string,
+    publisher: string,
   ): Promise<ConsumerDTO[]> {
     const followers = await this.prismaService.follower.findMany({
       where: {
-        publisherId: id,
+        publisherId: publisher,
         consumerId: {
           not: currentUser,
         },
@@ -137,13 +170,17 @@ export class UserService {
             relatives: {
               where: {
                 userBId: currentUser,
-                AND: [{ status: RelationshipStatus.ACCEPTED }],
+              },
+              select: {
+                status: true,
               },
             },
             relatedTo: {
               where: {
                 userAId: currentUser,
-                AND: [{ status: RelationshipStatus.ACCEPTED }],
+              },
+              select: {
+                status: true,
               },
             },
           },
@@ -155,24 +192,40 @@ export class UserService {
       const {
         consumer: { user, relatives, relatedTo },
       } = follower;
-      const isMyFriend = relatives?.length > 0 || relatedTo?.length > 0;
+      let status = RelationshipStatus.UNRELATED;
+      if (relatives.length > 0) {
+        status = relatives[0].status;
+      } else if (relatedTo.length > 0) {
+        status = relatedTo[0].status;
+      }
 
       return {
         ...user,
         following: undefined,
         friends: undefined,
-        myFriend: isMyFriend,
+        relationStatus: status,
       } as ConsumerDTO;
     });
   }
 
-  async findMyFriends(currentUser: string): Promise<UserDTO[]> {
+  async findMyFriends(currentUser: string): Promise<ConsumerDTO[]> {
     const friends = await this.prismaService.relationship.findMany({
       where: {
         OR: [{ userAId: currentUser }, { userBId: currentUser }],
-        AND: [{ status: RelationshipStatus.ACCEPTED }],
+        AND: [
+          {
+            OR: [
+              { status: RelationshipStatus.ACCEPTED },
+              { status: RelationshipStatus.MUTED },
+            ],
+          },
+        ],
+      },
+      orderBy: {
+        createdOn: 'asc',
       },
       select: {
+        status: true,
         userAId: true,
         userBId: true,
         userA: {
@@ -206,11 +259,60 @@ export class UserService {
       return [];
     }
 
-    return friends.map(
-      (relation) =>
+    return friends.map((relation) => {
+      const user =
         (currentUser === relation.userAId && relation.userB.user) ||
-        (currentUser === relation.userBId && relation.userA.user),
-    );
+        (currentUser === relation.userBId && relation.userA.user);
+
+      return {
+        ...user,
+        following: undefined,
+        friends: undefined,
+        relationStatus: relation.status,
+      };
+    });
+  }
+
+  async findMyPendingRequests(currentUser: string): Promise<ConsumerDTO[]> {
+    const friends = await this.prismaService.relationship.findMany({
+      where: {
+        userBId: currentUser,
+        AND: [{ status: RelationshipStatus.PENDING }],
+      },
+      orderBy: {
+        createdOn: 'asc',
+      },
+      select: {
+        status: true,
+        userA: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+                userName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!friends) {
+      return [];
+    }
+
+    return friends.map((relation) => {
+      const user = relation.userA.user;
+
+      return {
+        ...user,
+        following: undefined,
+        friends: undefined,
+        relationStatus: relation.status,
+      };
+    });
   }
 
   async findFriendsOf(
@@ -220,10 +322,18 @@ export class UserService {
     const friends = await this.prismaService.relationship.findMany({
       where: {
         OR: [
-          { userAId: consumerId, AND: { userBId: { not: currentUser } } },
+          {
+            userAId: consumerId,
+            AND: { userBId: { not: currentUser } },
+          },
           { userBId: consumerId, AND: { userAId: { not: currentUser } } },
         ],
-        AND: [{ status: RelationshipStatus.ACCEPTED }],
+        AND: {
+          OR: [
+            { status: RelationshipStatus.ACCEPTED },
+            { status: RelationshipStatus.MUTED },
+          ],
+        },
       },
       select: {
         userAId: true,
@@ -241,13 +351,17 @@ export class UserService {
             relatives: {
               where: {
                 userBId: currentUser,
-                AND: [{ status: RelationshipStatus.ACCEPTED }],
+              },
+              select: {
+                status: true,
               },
             },
             relatedTo: {
               where: {
                 userAId: currentUser,
-                AND: [{ status: RelationshipStatus.ACCEPTED }],
+              },
+              select: {
+                status: true,
               },
             },
           },
@@ -265,13 +379,17 @@ export class UserService {
             relatives: {
               where: {
                 userBId: currentUser,
-                AND: [{ status: RelationshipStatus.ACCEPTED }],
+              },
+              select: {
+                status: true,
               },
             },
             relatedTo: {
               where: {
                 userAId: currentUser,
-                AND: [{ status: RelationshipStatus.ACCEPTED }],
+              },
+              select: {
+                status: true,
               },
             },
           },
@@ -289,13 +407,18 @@ export class UserService {
         (consumerId === relation.userBId && relation.userA);
 
       const { user, relatives, relatedTo } = consumer;
-      const isMyFriend = relatives?.length > 0 || relatedTo?.length > 0;
+      let status = RelationshipStatus.UNRELATED;
+      if (relatives.length > 0) {
+        status = relatives[0].status;
+      } else if (relatedTo.length > 0) {
+        status = relatedTo[0].status;
+      }
 
       return {
         ...user,
         following: undefined,
         friends: undefined,
-        myFriend: isMyFriend,
+        relationStatus: status,
       };
     });
   }
@@ -337,6 +460,9 @@ export class UserService {
           where: {
             consumerId: currentUser,
           },
+          select: {
+            status: true,
+          },
         },
         _count: {
           select: {
@@ -357,7 +483,8 @@ export class UserService {
       ...user,
       events,
       followers: followersCount,
-      followedByMe: followers.length > 0,
+      followerStatus:
+        followers.length > 0 ? followers[0].status : FollowerStatus.UNRELATED,
     };
   }
 
@@ -390,32 +517,53 @@ export class UserService {
     const friendsCount = await this.prismaService.relationship.count({
       where: {
         OR: [{ userAId: consumer.userId }, { userBId: consumer.userId }],
-        AND: [{ status: RelationshipStatus.ACCEPTED }],
-      },
-    });
-
-    const relationWithCurrentUser = await this.prismaService.relationship.count(
-      {
-        where: {
+        AND: {
           OR: [
-            { userAId: consumer.userId, AND: { userBId: currentUser } },
-            { userBId: consumer.userId, AND: { userAId: currentUser } },
+            { status: RelationshipStatus.ACCEPTED },
+            { status: RelationshipStatus.MUTED },
           ],
-          AND: [{ status: RelationshipStatus.ACCEPTED }],
         },
       },
-    );
+    });
 
     const {
       user,
       _count: { following },
     } = consumer;
 
+    const [
+      currentUserRelation,
+    ] = await this.prismaService.relationship.findMany({
+      where: {
+        OR: [
+          { userAId: consumer.userId, AND: { userBId: currentUser } },
+          { userBId: consumer.userId, AND: { userAId: currentUser } },
+        ],
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    const consumerBlockedMe =
+      currentUserRelation &&
+      currentUserRelation?.status === RelationshipStatus.BLOCKED;
+
+    if (consumerBlockedMe) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, '');
+    }
+
+    let status = RelationshipStatus.UNRELATED;
+
+    if (currentUserRelation) {
+      status = currentUserRelation.status;
+    }
+
     return {
       ...user,
       following,
       friends: friendsCount,
-      myFriend: relationWithCurrentUser > 0,
+      relationStatus: status,
     } as ConsumerDTO;
   }
 
@@ -436,7 +584,392 @@ export class UserService {
     return { friends: friendsCount, following: followingCount };
   }
 
+  async sendFriendRequest(currentUser: string, consumer: string) {
+    const relationship = await this.prismaService.relationship.findMany({
+      where: {
+        OR: [
+          { userAId: currentUser, userBId: consumer },
+          { userBId: currentUser, userAId: consumer },
+        ],
+      },
+    });
+
+    if (relationship.length > 0) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The friend request could not be sent.',
+      );
+    }
+
+    await this.prismaService.relationship.create({
+      data: {
+        userAId: currentUser,
+        userBId: consumer,
+        status: RelationshipStatus.PENDING,
+        updatedBy: currentUser,
+        createdOn: new Date(),
+        updatedOn: new Date(),
+      },
+    });
+
+    await this.prismaService.activity.create({
+      data: {
+        creatorId: currentUser,
+        receiverId: consumer,
+        type: ActivityType.FRIEND_REQUEST,
+        sentOn: new Date(),
+      },
+    });
+  }
+
+  async acceptFriendRequest(currentUser: string, consumer: string) {
+    const relationship = await this.prismaService.relationship.findUnique({
+      where: {
+        userAId_userBId: {
+          userAId: consumer,
+          userBId: currentUser,
+        },
+      },
+      select: {
+        status: true,
+        updatedBy: true,
+      },
+    });
+
+    if (!relationship) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be accepted.',
+      );
+    }
+
+    const { status } = relationship;
+    const isIncorrectStatus =
+      status === RelationshipStatus.ACCEPTED ||
+      status === RelationshipStatus.BLOCKED;
+
+    if (isIncorrectStatus) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be accepted.',
+      );
+    }
+
+    await this.prismaService.relationship.update({
+      where: {
+        userAId_userBId: {
+          userAId: consumer,
+          userBId: currentUser,
+        },
+      },
+      data: {
+        status: RelationshipStatus.ACCEPTED,
+        updatedBy: currentUser,
+        updatedOn: new Date(),
+      },
+    });
+
+    await this.prismaService.activity.create({
+      data: {
+        creatorId: currentUser,
+        receiverId: consumer,
+        type: ActivityType.FRIEND_REQUEST_ACCEPTED,
+        sentOn: new Date(),
+      },
+    });
+  }
+
+  async declineFriendRequest(currentUser: string, consumer: string) {
+    const relationship = await this.prismaService.relationship.findUnique({
+      where: {
+        userAId_userBId: {
+          userAId: consumer,
+          userBId: currentUser,
+        },
+      },
+      select: {
+        status: true,
+        updatedBy: true,
+      },
+    });
+
+    if (!relationship) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be declined.',
+      );
+    }
+
+    const { status } = relationship;
+
+    if (status !== RelationshipStatus.PENDING) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be declined.',
+      );
+    }
+
+    await this.prismaService.relationship.delete({
+      where: {
+        userAId_userBId: {
+          userAId: consumer,
+          userBId: currentUser,
+        },
+      },
+    });
+  }
+
+  async muteFriend(currentUser: string, consumer: string) {
+    const results = await this.prismaService.relationship.findMany({
+      where: {
+        OR: [
+          { userAId: currentUser, userBId: consumer },
+          { userBId: currentUser, userAId: consumer },
+        ],
+      },
+      select: {
+        userAId: true,
+        userBId: true,
+        status: true,
+        updatedBy: true,
+      },
+    });
+
+    if (results.length === 0) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be muted.',
+      );
+    }
+
+    const [{ status, userAId, userBId }] = results;
+
+    if (status === RelationshipStatus.MUTED) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be muted.',
+      );
+    }
+
+    await this.prismaService.relationship.update({
+      where: {
+        userAId_userBId: {
+          userAId,
+          userBId,
+        },
+      },
+      data: {
+        status: RelationshipStatus.MUTED,
+        updatedBy: currentUser,
+        updatedOn: new Date(),
+      },
+    });
+  }
+
+  async unMuteFriend(currentUser: string, consumer: string) {
+    const results = await this.prismaService.relationship.findMany({
+      where: {
+        OR: [
+          { userAId: currentUser, userBId: consumer },
+          { userBId: currentUser, userAId: consumer },
+        ],
+      },
+      select: {
+        userAId: true,
+        userBId: true,
+        status: true,
+        updatedBy: true,
+      },
+    });
+
+    if (results.length === 0) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be unmuted.',
+      );
+    }
+
+    const [{ status, userAId, userBId, updatedBy }] = results;
+    const cantUnMute =
+      status !== RelationshipStatus.MUTED || updatedBy !== currentUser;
+
+    if (cantUnMute) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be unmuted.',
+      );
+    }
+
+    await this.prismaService.relationship.update({
+      where: {
+        userAId_userBId: {
+          userAId,
+          userBId,
+        },
+      },
+      data: {
+        status: RelationshipStatus.ACCEPTED,
+        updatedBy: currentUser,
+        updatedOn: new Date(),
+      },
+    });
+  }
+
+  async blockFriend(currentUser: string, consumer: string) {
+    const results = await this.prismaService.relationship.findMany({
+      where: {
+        OR: [
+          { userAId: currentUser, userBId: consumer },
+          { userBId: currentUser, userAId: consumer },
+        ],
+      },
+      select: {
+        userAId: true,
+        userBId: true,
+        status: true,
+        updatedBy: true,
+      },
+    });
+
+    if (results.length === 0) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be blocked.',
+      );
+    }
+
+    const [{ status, userAId, userBId }] = results;
+
+    if (status === RelationshipStatus.BLOCKED) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be blocked.',
+      );
+    }
+
+    await this.prismaService.relationship.update({
+      where: {
+        userAId_userBId: {
+          userAId,
+          userBId,
+        },
+      },
+      data: {
+        status: RelationshipStatus.BLOCKED,
+        updatedBy: currentUser,
+        updatedOn: new Date(),
+      },
+    });
+  }
+
+  async unBlockFriend(currentUser: string, consumer: string) {
+    const results = await this.prismaService.relationship.findMany({
+      where: {
+        OR: [
+          { userAId: currentUser, userBId: consumer },
+          { userBId: currentUser, userAId: consumer },
+        ],
+      },
+      select: {
+        userAId: true,
+        userBId: true,
+        status: true,
+        updatedBy: true,
+      },
+    });
+
+    if (results.length === 0) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be unblocked.',
+      );
+    }
+
+    const [{ status, userAId, userBId, updatedBy }] = results;
+    const cantUnBlock =
+      status !== RelationshipStatus.BLOCKED || updatedBy !== currentUser;
+
+    if (cantUnBlock) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be unblocked.',
+      );
+    }
+
+    await this.prismaService.relationship.update({
+      where: {
+        userAId_userBId: {
+          userAId,
+          userBId,
+        },
+      },
+      data: {
+        status: RelationshipStatus.ACCEPTED,
+        updatedBy: currentUser,
+        updatedOn: new Date(),
+      },
+    });
+  }
+
+  async removeFriend(currentUser: string, consumer: string) {
+    const results = await this.prismaService.relationship.findMany({
+      where: {
+        OR: [
+          { userAId: currentUser, userBId: consumer },
+          { userBId: currentUser, userAId: consumer },
+        ],
+      },
+      select: {
+        userAId: true,
+        userBId: true,
+        status: true,
+        updatedBy: true,
+      },
+    });
+
+    if (results.length === 0) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be unblocked.',
+      );
+    }
+
+    const [{ status, userAId, userBId }] = results;
+
+    if (status === RelationshipStatus.PENDING) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be removed.',
+      );
+    }
+
+    await this.prismaService.relationship.delete({
+      where: {
+        userAId_userBId: {
+          userAId,
+          userBId,
+        },
+      },
+    });
+  }
+
   async follow(currentUser: string, publisherId: string) {
+    const publisher = await this.prismaService.publisher.findUnique({
+      where: {
+        userId: publisherId,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    if (!publisher) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The publisher does not exists',
+      );
+    }
+
     const relation = await this.prismaService.follower.findUnique({
       where: {
         consumerId_publisherId: {
@@ -459,6 +992,219 @@ export class UserService {
         publisherId: publisherId,
         updatedBy: currentUser,
         status: FollowerStatus.FOLLOWING,
+      },
+    });
+  }
+
+  async mutePublisher(currentUser: string, publisher: string) {
+    const result = await this.prismaService.follower.findUnique({
+      where: {
+        consumerId_publisherId: {
+          consumerId: currentUser,
+          publisherId: publisher,
+        },
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    if (!result) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The publisher could not be muted.',
+      );
+    }
+
+    const { status } = result;
+
+    if (status === FollowerStatus.MUTED) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The publisher could not be muted.',
+      );
+    }
+
+    await this.prismaService.follower.update({
+      where: {
+        consumerId_publisherId: {
+          consumerId: currentUser,
+          publisherId: publisher,
+        },
+      },
+      data: {
+        status: FollowerStatus.MUTED,
+        updatedBy: currentUser,
+        updatedOn: new Date(),
+      },
+    });
+  }
+
+  async unMutePublisher(currentUser: string, publisher: string) {
+    const result = await this.prismaService.follower.findUnique({
+      where: {
+        consumerId_publisherId: {
+          consumerId: currentUser,
+          publisherId: publisher,
+        },
+      },
+      select: {
+        status: true,
+        updatedBy: true,
+      },
+    });
+
+    if (!result) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The publisher could not be unmuted.',
+      );
+    }
+
+    const { status, updatedBy } = result;
+    const cantUnMute =
+      status !== FollowerStatus.MUTED || updatedBy !== currentUser;
+
+    if (cantUnMute) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The publisher could not be unmuted.',
+      );
+    }
+
+    await this.prismaService.follower.update({
+      where: {
+        consumerId_publisherId: {
+          consumerId: currentUser,
+          publisherId: publisher,
+        },
+      },
+      data: {
+        status: FollowerStatus.FOLLOWING,
+        updatedBy: currentUser,
+        updatedOn: new Date(),
+      },
+    });
+  }
+
+  async blockPublisher(currentUser: string, publisher: string) {
+    const result = await this.prismaService.follower.findUnique({
+      where: {
+        consumerId_publisherId: {
+          consumerId: currentUser,
+          publisherId: publisher,
+        },
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    if (!result) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The publisher could not be blocked.',
+      );
+    }
+
+    const { status } = result;
+
+    if (status === FollowerStatus.BLOCKED) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The request could not be blocked.',
+      );
+    }
+
+    await this.prismaService.follower.update({
+      where: {
+        consumerId_publisherId: {
+          consumerId: currentUser,
+          publisherId: publisher,
+        },
+      },
+      data: {
+        status: FollowerStatus.BLOCKED,
+        updatedBy: currentUser,
+        updatedOn: new Date(),
+      },
+    });
+  }
+
+  async unBlockPublisher(currentUser: string, publisher: string) {
+    const result = await this.prismaService.follower.findUnique({
+      where: {
+        consumerId_publisherId: {
+          consumerId: currentUser,
+          publisherId: publisher,
+        },
+      },
+      select: {
+        status: true,
+        updatedBy: true,
+      },
+    });
+
+    if (!result) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The publisher could not be unblocked.',
+      );
+    }
+
+    const { status, updatedBy } = result;
+    const cantUnBlock =
+      status !== FollowerStatus.BLOCKED || updatedBy !== currentUser;
+
+    if (cantUnBlock) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The publisher could not be unblocked.',
+      );
+    }
+
+    await this.prismaService.follower.update({
+      where: {
+        consumerId_publisherId: {
+          consumerId: currentUser,
+          publisherId: publisher,
+        },
+      },
+      data: {
+        status: FollowerStatus.FOLLOWING,
+        updatedBy: currentUser,
+        updatedOn: new Date(),
+      },
+    });
+  }
+
+  async removePublisher(currentUser: string, publisher: string) {
+    const result = await this.prismaService.follower.findUnique({
+      where: {
+        consumerId_publisherId: {
+          consumerId: currentUser,
+          publisherId: publisher,
+        },
+      },
+      select: {
+        status: true,
+        updatedBy: true,
+      },
+    });
+
+    if (!result) {
+      throw new ApiException(
+        HttpStatus.BAD_REQUEST,
+        'The publisher could not be unfollowed.',
+      );
+    }
+
+    await this.prismaService.follower.delete({
+      where: {
+        consumerId_publisherId: {
+          consumerId: currentUser,
+          publisherId: publisher,
+        },
       },
     });
   }

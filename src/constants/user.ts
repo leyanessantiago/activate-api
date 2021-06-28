@@ -6,14 +6,17 @@ export enum VerificationLevel {
 }
 
 export enum RelationshipStatus {
-  PENDING,
-  ACCEPTED,
-  DECLINED,
-  BLOCKED,
+  UNRELATED = -1,
+  PENDING = 0,
+  ACCEPTED = 1,
+  BLOCKED = 2,
+  BLOCKED_YOU = 4,
+  MUTED = 3,
 }
 
 export enum FollowerStatus {
-  FOLLOWING,
-  MUTED,
-  BLOCKED,
+  UNRELATED = -1,
+  FOLLOWING = 0,
+  MUTED = 1,
+  BLOCKED = 2,
 }
