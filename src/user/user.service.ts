@@ -17,13 +17,24 @@ export class UserService {
     const friendsCount = await this.prismaService.relationship.count({
       where: {
         OR: [{ userAId: userId }, { userBId: userId }],
-        AND: [{ status: RelationshipStatus.ACCEPTED }],
+        AND: {
+          OR: [
+            { status: RelationshipStatus.ACCEPTED },
+            { status: RelationshipStatus.MUTED },
+          ],
+        },
       },
     });
 
     const followingCount = await this.prismaService.follower.count({
       where: {
         consumerId: userId,
+        AND: {
+          OR: [
+            { status: FollowerStatus.FOLLOWING },
+            { status: FollowerStatus.MUTED },
+          ],
+        },
       },
     });
 
@@ -77,6 +88,7 @@ export class UserService {
     const followers = await this.prismaService.follower.findMany({
       where: {
         publisherId: id,
+        status: { not: FollowerStatus.BLOCKED },
       },
       orderBy: {
         createdOn: 'asc',
@@ -657,12 +669,10 @@ export class UserService {
       const {
         consumer: { user, relatives, relatedTo },
       } = follower;
-      let status = RelationshipStatus.UNRELATED;
-      if (relatives.length > 0) {
-        status = relatives[0].status;
-      } else if (relatedTo.length > 0) {
-        status = relatedTo[0].status;
-      }
+      const userRelation =
+        (relatives.length > 0 && relatives[0]) ||
+        (relatedTo.length > 0 && relatedTo[0]);
+      const status = getStatus(userRelation as Relationship, currentUser);
 
       return {
         ...user,
@@ -1231,12 +1241,21 @@ export class UserService {
       );
     }
 
-    return this.prismaService.follower.create({
+    await this.prismaService.follower.create({
       data: {
         consumerId: currentUser,
         publisherId: publisherId,
         updatedBy: currentUser,
         status: FollowerStatus.FOLLOWING,
+      },
+    });
+
+    await this.prismaService.activity.create({
+      data: {
+        creatorId: currentUser,
+        receiverId: publisherId,
+        type: ActivityType.NEW_FOLLOWER,
+        sentOn: new Date(),
       },
     });
   }

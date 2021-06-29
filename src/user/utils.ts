@@ -1,5 +1,5 @@
 import { Relationship } from '.prisma/client';
-import { RelationshipStatus } from 'src/constants/user';
+import { RelationshipStatus } from '../constants/user';
 
 export function getStatus(
   relation: Relationship,
