@@ -1,7 +1,8 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { IUserInfo } from '../auth/models/iuser-info';
 import { CurrentUser } from '../core/jwt/current-user.decorator';
+import { PagedResponse } from '../core/responses/paged-response';
 import { PublisherDTO } from './models/publisher.dto';
 import { ConsumerDTO } from './models/consumer.dto';
 import { UserDTO } from './models/user.dto';
@@ -16,51 +17,75 @@ export class UserController {
   }
 
   @Get('friends')
-  async getMyFriends(@CurrentUser() user: IUserInfo): Promise<ConsumerDTO[]> {
-    return this.userService.findMyFriends(user.sub);
+  async getMyFriends(
+    @CurrentUser() user: IUserInfo,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ): Promise<PagedResponse<ConsumerDTO>> {
+    return this.userService.findMyFriends(user.sub, { page, limit });
   }
 
   @Get('pending')
   async getMyPendingRequests(
     @CurrentUser() user: IUserInfo,
-  ): Promise<ConsumerDTO[]> {
-    return this.userService.findMyPendingRequests(user.sub);
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ): Promise<PagedResponse<ConsumerDTO>> {
+    return this.userService.findMyPendingRequests(user.sub, { page, limit });
   }
 
   @Get('publishers')
   async getMyPublishers(
     @CurrentUser() user: IUserInfo,
-  ): Promise<PublisherDTO[]> {
-    return this.userService.findMyPublishers(user.sub);
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ): Promise<PagedResponse<PublisherDTO>> {
+    return this.userService.findMyPublishers(user.sub, { page, limit });
   }
 
   @Get('followers')
-  async getMyFollowers(@CurrentUser() user: IUserInfo): Promise<UserDTO[]> {
-    return this.userService.findMyFollowers(user.sub);
+  async getMyFollowers(
+    @CurrentUser() user: IUserInfo,
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ): Promise<PagedResponse<UserDTO>> {
+    return this.userService.findMyFollowers(user.sub, { page, limit });
   }
 
   @Get(':id/friends')
   async getFriendsOf(
     @CurrentUser() user: IUserInfo,
     @Param('id') userId: string,
-  ): Promise<ConsumerDTO[]> {
-    return this.userService.findFriendsOf(userId, user.sub);
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ): Promise<PagedResponse<ConsumerDTO>> {
+    return this.userService.findFriendsOf(userId, user.sub, { page, limit });
   }
 
   @Get(':id/publishers')
   async getPublishersFollowedBy(
     @CurrentUser() user: IUserInfo,
     @Param('id') userId: string,
-  ): Promise<PublisherDTO[]> {
-    return this.userService.findPublishersFollowedBy(userId, user.sub);
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ): Promise<PagedResponse<PublisherDTO>> {
+    return this.userService.findPublishersFollowedBy(userId, user.sub, {
+      page,
+      limit,
+    });
   }
 
   @Get(':id/followers')
-  async getFolowersOf(
+  async getFollowersOf(
     @CurrentUser() user: IUserInfo,
     @Param('id') publisher: string,
-  ): Promise<ConsumerDTO[]> {
-    return this.userService.findFollowersOf(user.sub, publisher);
+    @Query('page') page: number,
+    @Query('limit') limit: number,
+  ): Promise<PagedResponse<ConsumerDTO>> {
+    return this.userService.findFollowersOf(user.sub, publisher, {
+      page,
+      limit,
+    });
   }
 
   @Get('publisher/:id')
@@ -93,7 +118,7 @@ export class UserController {
   }
 
   @Get('publisher/:id/unmute')
-  async unMutepublisher(
+  async unmutePublisher(
     @CurrentUser() user: IUserInfo,
     @Param('id') publisher: string,
   ) {
@@ -101,7 +126,7 @@ export class UserController {
   }
 
   @Get('publisher/:id/block')
-  async blockpublisher(
+  async blockPublisher(
     @CurrentUser() user: IUserInfo,
     @Param('id') publisher: string,
   ) {
@@ -109,7 +134,7 @@ export class UserController {
   }
 
   @Get('publisher/:id/unblock')
-  async unBlockpublisher(
+  async unblockPublisher(
     @CurrentUser() user: IUserInfo,
     @Param('id') publisher: string,
   ) {

@@ -3,12 +3,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RelationshipStatus } from '../constants/user';
 import { UpcomingEventDto } from './dto/upcoming_event.dto';
 import { PagedResponse } from '../core/responses/paged-response';
+import { QueryParams } from '../constants/queries';
 
-export type FetchUpcomingEventsQueryParams = {
-  page: number;
-  limit: number;
+export interface UpcomingEventsQueryParams extends QueryParams {
   date?: string;
-};
+}
 
 @Injectable()
 export class UpcomingEventService {
@@ -16,7 +15,7 @@ export class UpcomingEventService {
 
   async findCurrentUserUpcomingEvents(
     currentUserId: string,
-    queryParams: FetchUpcomingEventsQueryParams,
+    queryParams: UpcomingEventsQueryParams,
   ): Promise<PagedResponse<UpcomingEventDto>> {
     const { limit, page, date } = queryParams;
     const dayBegin = date ? new Date(`${date}T00:00:00`) : undefined;
@@ -143,7 +142,7 @@ export class UpcomingEventService {
 
   async findDatesOfCurrentUserEvents(
     currentUserId: string,
-    queryParams: FetchUpcomingEventsQueryParams,
+    queryParams: UpcomingEventsQueryParams,
   ): Promise<PagedResponse<Date>> {
     const { limit, page } = queryParams;
 
