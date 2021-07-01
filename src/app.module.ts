@@ -9,6 +9,7 @@ import { JwtStrategy } from './core/jwt/jwt.startegy';
 import { EventModule } from './event/event.module';
 import { ValidationPipe } from './core/validators/validation.pipe';
 // import { RateLimiterModule, RateLimiterInterceptor } from 'nestjs-rate-limiter';
+import { ActivityModule } from './activity/activity.module';
 // import RateLimiterConfiguration from './core/constants/rate-limiter-configuration';
 
 @Module({
@@ -18,6 +19,7 @@ import { ValidationPipe } from './core/validators/validation.pipe';
     EventModule,
     CategoryModule,
     InterestsModule,
+    ActivityModule,
     // RateLimiterModule.register(RateLimiterConfiguration),
   ],
   controllers: [],
