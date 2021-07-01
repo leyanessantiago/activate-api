@@ -89,6 +89,9 @@ export default async function seedConsumerActivities(prisma: PrismaClient) {
     type: 0,
     creatorId: friend?.userAId || friend?.userBId,
     receiverId: loginUser.id,
+    eventId: faker.random.arrayElement(
+      (friend.userA || friend.userB).eventsFollowing,
+    ).eventId,
     sentOn: faker.date.past(0, new Date()),
     seen: faker.datatype.boolean(),
   }));

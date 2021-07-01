@@ -17,9 +17,9 @@ async function main() {
   await seedCategories(prisma);
   await seedEvents(prisma);
   await seedConsumerRelations(prisma);
+  await seedEventFollowers(prisma);
   await seedConsumerActivities(prisma);
   await seedEventActivities(prisma);
-  await seedEventFollowers(prisma);
 }
 
 main()
