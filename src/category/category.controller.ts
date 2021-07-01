@@ -13,6 +13,7 @@ import {
   FetchCategoriesQueryParams,
 } from './category.service';
 import { CategoryDto } from './dto/category.dto';
+import { PagedResponse } from '../core/responses/paged-response';
 
 @Controller('categories')
 export class CategoryController {
@@ -28,7 +29,7 @@ export class CategoryController {
     @Query('limit') limit: number,
     @Query('page') page: number,
     @Query('name') name: string,
-  ) {
+  ): Promise<PagedResponse<CategoryDto>> {
     const queryParams: FetchCategoriesQueryParams = {
       page: page || undefined,
       limit: limit || undefined,
@@ -42,7 +43,7 @@ export class CategoryController {
     @Query('limit') limit: number,
     @Query('page') page: number,
     @Query('parentId') parentId: string,
-  ) {
+  ): Promise<PagedResponse<CategoryDto>> {
     const queryParams: FetchCategoriesQueryParams = {
       page: page || undefined,
       limit: limit || undefined,

@@ -6,6 +6,7 @@ import seedEvents from './seeds/events';
 import seedConsumerRelations from './seeds/consumer-relations';
 import seedEventActivities from './seeds/event-activities';
 import seedConsumerActivities from './seeds/consumer-activities';
+import seedEventFollowers from './seeds/event-followers';
 
 const prisma = new PrismaClient();
 
@@ -18,6 +19,7 @@ async function main() {
   await seedConsumerRelations(prisma);
   await seedConsumerActivities(prisma);
   await seedEventActivities(prisma);
+  await seedEventFollowers(prisma);
 }
 
 main()

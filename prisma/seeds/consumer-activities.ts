@@ -49,12 +49,12 @@ export default async function seedConsumerActivities(prisma: PrismaClient) {
       userBId: true,
       userA: {
         select: {
-          eventsFollowed: true,
+          eventsFollowing: true,
         },
       },
       userB: {
         select: {
-          eventsFollowed: true,
+          eventsFollowing: true,
         },
       },
     },
@@ -89,9 +89,6 @@ export default async function seedConsumerActivities(prisma: PrismaClient) {
     type: 0,
     creatorId: friend?.userAId || friend?.userBId,
     receiverId: loginUser.id,
-    eventId: faker.random.arrayElement(
-      (friend.userA || friend.userB).eventsFollowed,
-    ).id,
     sentOn: faker.date.past(0, new Date()),
     seen: faker.datatype.boolean(),
   }));

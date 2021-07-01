@@ -69,24 +69,11 @@ export default async function seedEvents(prisma: PrismaClient) {
   for (const event of events) {
     const comments = generateComments(event.date, users);
 
-    const dbEvent = await prisma.event.create({
+    await prisma.event.create({
       data: {
         ...event,
         comments: {
           create: comments,
-        },
-      },
-    });
-
-    const followers = faker.random
-      .arrayElements(users)
-      .map((follower) => ({ userId: follower.userId }));
-
-    await prisma.event.update({
-      where: { id: dbEvent.id },
-      data: {
-        followers: {
-          connect: followers,
         },
       },
     });

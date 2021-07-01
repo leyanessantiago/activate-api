@@ -1,22 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UpcomingController } from './upcoming.controller';
-import { UpcomingService } from './upcoming.service';
+import { UpcomingEventController } from './upcoming_event.controller';
+import { UpcomingEventService } from './upcoming_event.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 describe('UpcomingController', () => {
-  let controller: UpcomingController;
+  let controller: UpcomingEventController;
 
   beforeEach(async () => {
     const prismaServiceMock = jest.fn();
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [UpcomingController],
+      controllers: [UpcomingEventController],
       providers: [
-        UpcomingService,
+        UpcomingEventService,
         { provide: PrismaService, useValue: prismaServiceMock },
       ],
     }).compile();
 
-    controller = module.get<UpcomingController>(UpcomingController);
+    controller = module.get<UpcomingEventController>(UpcomingEventController);
   });
 
   it('should be defined', () => {

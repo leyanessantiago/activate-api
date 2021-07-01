@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, RequestMethod } from '@nestjs/common';
+import { LoggerModule } from 'nestjs-pino/dist';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { CategoryModule } from './category/category.module';
@@ -10,16 +11,23 @@ import { EventModule } from './event/event.module';
 import { ValidationPipe } from './core/validators/validation.pipe';
 // import { RateLimiterModule, RateLimiterInterceptor } from 'nestjs-rate-limiter';
 // import RateLimiterConfiguration from './core/constants/rate-limiter-configuration';
-import { UpcomingModule } from './upcoming/upcoming.module';
+import { UpcomingEventModule } from './upcoming_event/upcoming_event.module';
 
 @Module({
   imports: [
     UserModule,
-    UpcomingModule,
+    UpcomingEventModule,
     AuthModule,
     EventModule,
     CategoryModule,
     InterestsModule,
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+        prettyPrint: process.env.NODE_ENV !== 'production',
+      },
+      exclude: [{ method: RequestMethod.ALL, path: 'info' }],
+    }),
     // RateLimiterModule.register(RateLimiterConfiguration),
   ],
   controllers: [],
