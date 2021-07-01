@@ -10,7 +10,7 @@ export default async function seedEventActivities(prisma: PrismaClient) {
       authorId: true,
       followers: {
         select: {
-          userId: true,
+          consumerId: true,
         },
       },
       comments: {
@@ -28,7 +28,7 @@ export default async function seedEventActivities(prisma: PrismaClient) {
   events.forEach((event) => {
     const newEventFollower = event.followers.map((follower) => ({
       type: 7,
-      creatorId: follower.userId,
+      creatorId: follower.consumerId,
       receiverId: event.authorId,
       eventId: event.id,
       sentOn: faker.date.past(0, new Date()),
@@ -38,7 +38,7 @@ export default async function seedEventActivities(prisma: PrismaClient) {
     const eventUpdated = event.followers.map((follower) => ({
       type: 1,
       creatorId: event.authorId,
-      receiverId: follower.userId,
+      receiverId: follower.consumerId,
       eventId: event.id,
       sentOn: faker.date.past(0, new Date()),
       seen: faker.datatype.boolean(),
