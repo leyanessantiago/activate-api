@@ -20,9 +20,10 @@ export class ExceptionsFilter implements ExceptionFilter {
     const firstArg = host.getArgByIndex(0);
     const requestMethod = firstArg.method;
     const requestUrl = firstArg.url;
+    const { message, stack } = exception;
     logger.error(
       `Request Method: ${requestMethod}, Url: ${requestUrl}, Exception: ${JSON.stringify(
-        exception,
+        { message, stack },
       )}`,
     );
 
@@ -43,9 +44,7 @@ export class ExceptionsFilter implements ExceptionFilter {
           : HttpStatus.INTERNAL_SERVER_ERROR;
 
       const errorMessage =
-        status === HttpStatus.INTERNAL_SERVER_ERROR
-          ? 'Oops something went wrong, please try later.'
-          : exception.response.message || exception.message;
+        exception.message || 'Oops something went wrong, please try later.';
 
       response
         .status(status)

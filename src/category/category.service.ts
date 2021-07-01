@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CategoryDto } from './dto/category.dto';
+import { PagedResponse } from '../core/responses/paged-response';
 
 export type FetchCategoriesQueryParams = {
   page: number;
@@ -20,11 +21,13 @@ export class CategoryService {
     });
   }
 
-  async findAll(queryParams: FetchCategoriesQueryParams) {
+  async findAll(
+    queryParams: FetchCategoriesQueryParams,
+  ): Promise<PagedResponse<CategoryDto>> {
     const { limit, page, name } = queryParams;
     const args: Prisma.CategoryFindManyArgs = {
       take: limit,
-      skip: page ? limit * (page - 1) : 0,
+      skip: page ? (limit || 0) * (page - 1) : 0,
       where: {
         name: { contains: name },
       },
@@ -43,11 +46,13 @@ export class CategoryService {
     };
   }
 
-  async getTree(queryParams: FetchCategoriesQueryParams) {
+  async getTree(
+    queryParams: FetchCategoriesQueryParams,
+  ): Promise<PagedResponse<CategoryDto>> {
     const { limit, page, parentId } = queryParams;
     const args: Prisma.CategoryFindManyArgs = {
       take: limit,
-      skip: page ? limit * (page - 1) : 0,
+      skip: page ? (limit || 0) * (page - 1) : 0,
       where: {
         parentId: parentId || null,
       },
