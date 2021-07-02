@@ -8,11 +8,11 @@ export enum VerificationLevel {
 export enum RelationshipStatus {
   UNRELATED = -1,
   PENDING = 0,
+  PENDING_YOU = 5,
   ACCEPTED = 1,
   BLOCKED = 2,
-  MUTED = 3,
   BLOCKED_YOU = 4,
-  PENDING_YOU = 5,
+  MUTED = 3,
 }
 
 export enum FollowerStatus {

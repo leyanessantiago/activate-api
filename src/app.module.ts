@@ -10,6 +10,7 @@ import { JwtStrategy } from './core/jwt/jwt.startegy';
 import { EventModule } from './event/event.module';
 import { ValidationPipe } from './core/validators/validation.pipe';
 // import { RateLimiterModule, RateLimiterInterceptor } from 'nestjs-rate-limiter';
+import { ActivityModule } from './activity/activity.module';
 // import RateLimiterConfiguration from './core/constants/rate-limiter-configuration';
 import { UpcomingEventModule } from './upcoming_event/upcoming_event.module';
 
@@ -21,6 +22,7 @@ import { UpcomingEventModule } from './upcoming_event/upcoming_event.module';
     EventModule,
     CategoryModule,
     InterestsModule,
+    ActivityModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',

@@ -1,6 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import {
-  FetchUpcomingEventsQueryParams,
+  UpcomingEventsQueryParams,
   UpcomingEventService,
 } from './upcoming_event.service';
 import { CurrentUser } from '../core/jwt/current-user.decorator';
@@ -19,9 +19,9 @@ export class UpcomingEventController {
     @Query('limit') limit: number,
     @Query('date') date: string,
   ): Promise<PagedResponse<UpcomingEventDto>> {
-    const queryParams: FetchUpcomingEventsQueryParams = {
-      page: page || undefined,
-      limit: limit || undefined,
+    const queryParams: UpcomingEventsQueryParams = {
+      page,
+      limit,
       date,
     };
     return this.upcomingEventService.findCurrentUserUpcomingEvents(
@@ -36,7 +36,7 @@ export class UpcomingEventController {
     @Query('page') page: number,
     @Query('limit') limit: number,
   ): Promise<PagedResponse<Date>> {
-    const queryParams: FetchUpcomingEventsQueryParams = {
+    const queryParams: UpcomingEventsQueryParams = {
       page: page || undefined,
       limit: limit || undefined,
     };
