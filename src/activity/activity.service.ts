@@ -13,12 +13,13 @@ export class ActivityService {
     queryParams: QueryParams,
   ): Promise<PagedResponse<ActivityDTO>> {
     const { page, limit } = queryParams;
+    const filter = {
+      seen: false,
+      receiverId: currentUser,
+    };
 
     const activities = await this.prismaService.activity.findMany({
-      where: {
-        seen: false,
-        receiverId: currentUser,
-      },
+      where: filter,
       orderBy: {
         sentOn: 'desc',
       },
@@ -51,10 +52,7 @@ export class ActivityService {
     }
 
     const count = await this.prismaService.activity.count({
-      where: {
-        seen: false,
-        receiverId: currentUser,
-      },
+      where: filter,
     });
 
     return { results: activities, page, count };
