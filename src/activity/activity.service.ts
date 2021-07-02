@@ -23,7 +23,7 @@ export class ActivityService {
         sentOn: 'desc',
       },
       skip: page ? (limit || 0) * (page - 1) : 0,
-      take: limit,
+      take: limit || undefined,
       select: {
         id: true,
         sentOn: true,

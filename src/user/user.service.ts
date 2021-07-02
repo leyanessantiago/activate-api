@@ -48,15 +48,17 @@ export class UserService {
     queryParams: QueryParams,
   ): Promise<PagedResponse<PublisherDTO>> {
     const { page, limit } = queryParams;
-    const publishers = await this.prismaService.follower.findMany({
-      where: {
-        consumerId: currentUser,
-        AND: {
-          status: { not: FollowerStatus.BLOCKED },
-        },
+    const filters = {
+      consumerId: currentUser,
+      AND: {
+        status: { not: FollowerStatus.BLOCKED },
       },
+    };
+
+    const publishers = await this.prismaService.follower.findMany({
+      where: filters,
       skip: page ? (limit || 0) * (page - 1) : 0,
-      take: limit,
+      take: limit || undefined,
       orderBy: {
         createdOn: 'asc',
       },
@@ -82,12 +84,7 @@ export class UserService {
     }
 
     const count = await this.prismaService.follower.count({
-      where: {
-        consumerId: currentUser,
-        AND: {
-          status: { not: FollowerStatus.BLOCKED },
-        },
-      },
+      where: filters,
     });
 
     const results = publishers.map((entry) => {
@@ -112,13 +109,15 @@ export class UserService {
     queryParams: QueryParams,
   ): Promise<PagedResponse<UserDTO>> {
     const { page, limit } = queryParams;
+    const filters = {
+      publisherId: id,
+      status: { not: FollowerStatus.BLOCKED },
+    };
+
     const followers = await this.prismaService.follower.findMany({
-      where: {
-        publisherId: id,
-        status: { not: FollowerStatus.BLOCKED },
-      },
+      where: filters,
       skip: page ? (limit || 0) * (page - 1) : 0,
-      take: limit,
+      take: limit || undefined,
       orderBy: {
         createdOn: 'asc',
       },
@@ -143,10 +142,7 @@ export class UserService {
     }
 
     const count = await this.prismaService.follower.count({
-      where: {
-        publisherId: id,
-        status: { not: FollowerStatus.BLOCKED },
-      },
+      where: filters,
     });
     const results = followers.map((f) => f.consumer.user);
 
@@ -158,18 +154,20 @@ export class UserService {
     queryParams: QueryParams,
   ): Promise<PagedResponse<ConsumerDTO>> {
     const { page, limit } = queryParams;
-    const friends = await this.prismaService.relationship.findMany({
-      where: {
-        OR: [{ userAId: currentUser }, { userBId: currentUser }],
-        AND: {
-          OR: [
-            { status: RelationshipStatus.ACCEPTED },
-            { status: RelationshipStatus.MUTED },
-          ],
-        },
+    const filters = {
+      OR: [{ userAId: currentUser }, { userBId: currentUser }],
+      AND: {
+        OR: [
+          { status: RelationshipStatus.ACCEPTED },
+          { status: RelationshipStatus.MUTED },
+        ],
       },
+    };
+
+    const friends = await this.prismaService.relationship.findMany({
+      where: filters,
       skip: page ? (limit || 0) * (page - 1) : 0,
-      take: limit,
+      take: limit || undefined,
       orderBy: {
         createdOn: 'asc',
       },
@@ -209,15 +207,7 @@ export class UserService {
     }
 
     const count = await this.prismaService.relationship.count({
-      where: {
-        OR: [{ userAId: currentUser }, { userBId: currentUser }],
-        AND: {
-          OR: [
-            { status: RelationshipStatus.ACCEPTED },
-            { status: RelationshipStatus.MUTED },
-          ],
-        },
-      },
+      where: filters,
     });
 
     const results = friends.map((relation) => {
@@ -241,15 +231,17 @@ export class UserService {
     queryParams: QueryParams,
   ): Promise<PagedResponse<ConsumerDTO>> {
     const { page, limit } = queryParams;
-    const pending = await this.prismaService.relationship.findMany({
-      where: {
-        userBId: currentUser,
-        AND: {
-          status: RelationshipStatus.PENDING,
-        },
+    const filters = {
+      userBId: currentUser,
+      AND: {
+        status: RelationshipStatus.PENDING,
       },
+    };
+
+    const pending = await this.prismaService.relationship.findMany({
+      where: filters,
       skip: page ? (limit || 0) * (page - 1) : 0,
-      take: limit,
+      take: limit || undefined,
       orderBy: {
         createdOn: 'asc',
       },
@@ -275,12 +267,7 @@ export class UserService {
     }
 
     const count = await this.prismaService.relationship.count({
-      where: {
-        userBId: currentUser,
-        AND: {
-          status: RelationshipStatus.PENDING,
-        },
-      },
+      where: filters,
     });
 
     const results = pending.map((relation) => {
@@ -537,13 +524,15 @@ export class UserService {
     const { page, limit } = queryParams;
     const publishersToAvoid = await this.findMyPublishersToAvoid(currentUser);
     const ids = publishersToAvoid.map((p) => p.id);
+    const filters = {
+      consumerId: userId,
+      publisherId: { notIn: ids },
+    };
+
     const following = await this.prismaService.follower.findMany({
-      where: {
-        consumerId: userId,
-        publisherId: { notIn: ids },
-      },
+      where: filters,
       skip: page ? (limit || 0) * (page - 1) : 0,
-      take: limit,
+      take: limit || undefined,
       select: {
         publisher: {
           select: {
@@ -573,10 +562,7 @@ export class UserService {
     }
 
     const count = await this.prismaService.follower.count({
-      where: {
-        consumerId: userId,
-        publisherId: { notIn: ids },
-      },
+      where: filters,
     });
 
     const results = following.map(({ publisher: { user, followers } }) => ({
@@ -600,33 +586,35 @@ export class UserService {
     const { page, limit } = queryParams;
     const usersToAvoid = await this.findMyUsersToAvoid(currentUser);
     const ids = usersToAvoid.map((user) => user.id);
-    const friends = await this.prismaService.relationship.findMany({
-      where: {
-        OR: [
-          {
-            userAId: consumerId,
-            AND: {
-              userAId: { notIn: ids },
-              userBId: { not: currentUser },
-            },
+    const filters = {
+      OR: [
+        {
+          userAId: consumerId,
+          AND: {
+            userAId: { notIn: ids },
+            userBId: { not: currentUser },
           },
-          {
-            userBId: consumerId,
-            AND: {
-              userBId: { notIn: ids },
-              userAId: { not: currentUser },
-            },
-          },
-        ],
-        AND: {
-          OR: [
-            { status: RelationshipStatus.ACCEPTED },
-            { status: RelationshipStatus.MUTED },
-          ],
         },
+        {
+          userBId: consumerId,
+          AND: {
+            userBId: { notIn: ids },
+            userAId: { not: currentUser },
+          },
+        },
+      ],
+      AND: {
+        OR: [
+          { status: RelationshipStatus.ACCEPTED },
+          { status: RelationshipStatus.MUTED },
+        ],
       },
+    };
+
+    const friends = await this.prismaService.relationship.findMany({
+      where: filters,
       skip: page ? (limit || 0) * (page - 1) : 0,
-      take: limit,
+      take: limit || undefined,
       select: {
         userAId: true,
         userBId: true,
@@ -696,30 +684,7 @@ export class UserService {
     }
 
     const count = await this.prismaService.relationship.count({
-      where: {
-        OR: [
-          {
-            userAId: consumerId,
-            AND: {
-              userAId: { notIn: ids },
-              userBId: { not: currentUser },
-            },
-          },
-          {
-            userBId: consumerId,
-            AND: {
-              userBId: { notIn: ids },
-              userAId: { not: currentUser },
-            },
-          },
-        ],
-        AND: {
-          OR: [
-            { status: RelationshipStatus.ACCEPTED },
-            { status: RelationshipStatus.MUTED },
-          ],
-        },
-      },
+      where: filters,
     });
 
     const results = friends.map((relation) => {
@@ -752,16 +717,18 @@ export class UserService {
     const { page, limit } = queryParams;
     const usersToAvoid = await this.findMyUsersToAvoid(currentUser);
     const ids = usersToAvoid.map((user) => user.id);
-    const followers = await this.prismaService.follower.findMany({
-      where: {
-        publisherId: publisher,
-        consumerId: {
-          not: currentUser,
-          notIn: ids,
-        },
+    const filters = {
+      publisherId: publisher,
+      consumerId: {
+        not: currentUser,
+        notIn: ids,
       },
+    };
+
+    const followers = await this.prismaService.follower.findMany({
+      where: filters,
       skip: page ? (limit || 0) * (page - 1) : 0,
-      take: limit,
+      take: limit || undefined,
       select: {
         consumer: {
           select: {
@@ -799,13 +766,7 @@ export class UserService {
     }
 
     const count = await this.prismaService.follower.count({
-      where: {
-        publisherId: publisher,
-        consumerId: {
-          not: currentUser,
-          notIn: ids,
-        },
-      },
+      where: filters,
     });
 
     const results = followers.map((follower) => {
