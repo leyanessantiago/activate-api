@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Event } from '.prisma/client';
-import { ApiException } from 'src/core/exceptions/api-exception';
+import { ApiException } from '../core/exceptions/api-exception';
 
 @Injectable()
 export class EventService {
