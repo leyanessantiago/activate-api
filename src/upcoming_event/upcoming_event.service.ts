@@ -4,6 +4,7 @@ import { RelationshipStatus } from '../constants/user';
 import { UpcomingEventDto } from './dto/upcoming_event.dto';
 import { PagedResponse } from '../core/responses/paged-response';
 import { QueryParams } from '../constants/queries';
+import { endOfDay, startOfDay } from './utils';
 
 export interface UpcomingEventsQueryParams extends QueryParams {
   date?: string;
@@ -18,8 +19,6 @@ export class UpcomingEventService {
     queryParams: UpcomingEventsQueryParams,
   ): Promise<PagedResponse<UpcomingEventDto>> {
     const { limit, page, date } = queryParams;
-    const dayBegin = date ? new Date(`${date}T00:00:00`) : undefined;
-    const dayEnd = date ? new Date(`${date}T23:59:59`) : undefined;
 
     const where = {
       followers: { some: { consumerId: currentUserId } },
@@ -31,8 +30,8 @@ export class UpcomingEventService {
         },
         {
           date: {
-            gte: dayBegin,
-            lte: dayEnd,
+            gte: startOfDay(date),
+            lte: endOfDay(date),
           },
         },
       ],
@@ -47,12 +46,15 @@ export class UpcomingEventService {
         id: true,
         name: true,
         date: true,
+        image: true,
+        address: true,
         description: true,
         author: {
           select: {
             user: {
               select: {
                 id: true,
+                name: true,
                 avatar: true,
               },
             },
@@ -124,12 +126,10 @@ export class UpcomingEventService {
 
       return {
         ...rest,
-        author: {
-          id: author.user.id,
-          avatar: author.user.avatar,
-        },
+        author: { ...author.user },
         relativesFollowers,
         followersCount: _count.followers,
+        going: true,
       };
     });
 

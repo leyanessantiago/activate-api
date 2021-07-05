@@ -51,7 +51,7 @@ export default async function seedEvents(prisma: PrismaClient) {
     const { DOMAIN_NAME, API_PREFIX } = process.env;
     const domain = `${DOMAIN_NAME}/${API_PREFIX}`;
     const imageName = faker.random.arrayElement(images);
-    const image = `${domain}/event/image/${imageName}`;
+    const image = `${domain}/events/image/${imageName}`;
     const authorId = faker.random.arrayElement(publishers).userId;
     const categoryId = faker.random.arrayElement(categories).id;
 
@@ -60,7 +60,7 @@ export default async function seedEvents(prisma: PrismaClient) {
       authorId,
       categoryId,
       name: faker.lorem.words(6),
-      address: faker.address.secondaryAddress(),
+      address: faker.address.streetAddress(true),
       date: faker.date.future(),
       description: faker.lorem.lines(8),
     } as Event;
