@@ -11,6 +11,7 @@ import { VerifyDto } from './dto/verify.dto';
 import { ProfileDto } from './dto/profile.dto';
 import { IUserInfo } from './models/iuser-info';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
+    private mailService: MailService,
   ) {}
 
   async signUp(signUp: SignUpDto): Promise<IUserInfo | null> {
@@ -31,6 +33,12 @@ export class AuthService {
     };
 
     const { user } = await this.userService.createConsumer(userData);
+
+    await this.mailService.sendUserVerificationCode(
+      user.email,
+      user.verificationCode,
+    );
+
     return this.getUserInfo(user);
   }
 

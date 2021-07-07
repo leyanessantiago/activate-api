@@ -9,11 +9,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { LoginValidator } from './validators/login-validator';
 import { PrismaService } from '../prisma/prisma.service';
 import { MulterModule } from '@nestjs/platform-express';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
     UserModule,
     PrismaModule,
+    MailModule,
     MulterModule.register({
       dest: './images/avatars',
     }),
