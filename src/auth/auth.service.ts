@@ -12,6 +12,7 @@ import { ProfileDto } from './dto/profile.dto';
 import { IUserInfo } from './models/iuser-info';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { MailService } from '../mail/mail.service';
+import buildAvatarUrl from '../helpers/build-avatar-url';
 
 @Injectable()
 export class AuthService {
@@ -135,11 +136,8 @@ export class AuthService {
       throw new ApiException(HttpStatus.BAD_REQUEST, 'User not found');
     }
 
-    const { DOMAIN_NAME, API_PREFIX } = process.env;
-    const domain = `${DOMAIN_NAME}/${API_PREFIX}`;
-
     const userProfile: Prisma.UserUpdateInput = {
-      avatar: `${domain}/auth/avatar/${fileName}`,
+      avatar: fileName,
     };
 
     const updatedUser = await this.userService.update(sub, userProfile);
@@ -176,7 +174,7 @@ export class AuthService {
       email,
       userName,
       name,
-      avatar,
+      avatar: buildAvatarUrl(avatar),
       theme,
       useDarkStyle,
       verificationLevel,

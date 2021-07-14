@@ -1,4 +1,4 @@
-export interface UpcomingEventDto {
+export interface EventDTO {
   id: string;
   name: string;
   date: Date;

@@ -48,10 +48,7 @@ export default async function seedEvents(prisma: PrismaClient) {
   const categories: Category[] = await prisma.category.findMany();
 
   const events = new Array(20).fill(1).map(() => {
-    const { DOMAIN_NAME, API_PREFIX } = process.env;
-    const domain = `${DOMAIN_NAME}/${API_PREFIX}`;
-    const imageName = faker.random.arrayElement(images);
-    const image = `${domain}/events/image/${imageName}`;
+    const image = faker.random.arrayElement(images);
     const authorId = faker.random.arrayElement(publishers).userId;
     const categoryId = faker.random.arrayElement(categories).id;
 

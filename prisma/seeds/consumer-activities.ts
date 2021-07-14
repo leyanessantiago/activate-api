@@ -1,6 +1,14 @@
-import { PrismaClient } from '.prisma/client';
+import { PrismaClient, Relationship } from '.prisma/client';
 import * as faker from 'faker';
 import { RelationshipStatus } from '../../src/constants/user';
+
+function getFriend(loginUser: string, relation: Relationship) {
+  if (relation.userAId && relation.userAId !== loginUser) {
+    return relation.userAId;
+  }
+
+  return relation.userBId;
+}
 
 export default async function seedConsumerActivities(prisma: PrismaClient) {
   console.log('Seeding consumer related activities');
@@ -35,14 +43,14 @@ export default async function seedConsumerActivities(prisma: PrismaClient) {
   const receivedRequests = await prisma.relationship.findMany({
     where: {
       OR: [{ userAId: id }, { userBId: id }],
-      AND: [{ status: RelationshipStatus.PENDING }, { updatedBy: { not: id } }],
+      AND: { status: RelationshipStatus.PENDING, updatedBy: { not: id } },
     },
   });
 
   const friends = await prisma.relationship.findMany({
     where: {
       OR: [{ userAId: id }, { userBId: id }],
-      AND: [{ status: RelationshipStatus.ACCEPTED }],
+      AND: { status: RelationshipStatus.ACCEPTED, updatedBy: { not: id } },
     },
     select: {
       userAId: true,
@@ -78,7 +86,7 @@ export default async function seedConsumerActivities(prisma: PrismaClient) {
 
   const friendRequestsAccepted = friends.map((friend) => ({
     type: 6,
-    creatorId: friend?.userAId || friend?.userBId,
+    creatorId: getFriend(id, friend as any),
     receiverId: loginUser.id,
     sentOn: faker.date.past(0, new Date()),
     seen: faker.datatype.boolean(),
@@ -87,7 +95,7 @@ export default async function seedConsumerActivities(prisma: PrismaClient) {
   const inviters = faker.random.arrayElements(friends);
   const invitations = inviters.map((friend) => ({
     type: 0,
-    creatorId: friend?.userAId || friend?.userBId,
+    creatorId: getFriend(id, friend as any),
     receiverId: loginUser.id,
     eventId: faker.random.arrayElement(
       (friend.userA || friend.userB).eventsFollowing,
