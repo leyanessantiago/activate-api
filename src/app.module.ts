@@ -14,12 +14,10 @@ import { ValidationPipe } from './core/validators/validation.pipe';
 import { ActivityModule } from './activity/activity.module';
 import { MailModule } from './mail/mail.module';
 // import RateLimiterConfiguration from './core/constants/rate-limiter-configuration';
-import { UpcomingEventModule } from './upcoming_event/upcoming_event.module';
 
 @Module({
   imports: [
     UserModule,
-    UpcomingEventModule,
     AuthModule,
     EventModule,
     CategoryModule,

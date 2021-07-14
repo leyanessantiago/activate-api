@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { QueryParams } from '../constants/queries';
 import { PagedResponse } from '../core/responses/paged-response';
 import { ActivityDTO } from './models/activity.dto';
+import buildAvatarUrl from '../helpers/build-avatar-url';
 
 @Injectable()
 export class ActivityService {
@@ -55,6 +56,16 @@ export class ActivityService {
       where: filter,
     });
 
-    return { results: activities, page, count };
+    return {
+      results: activities.map((act) => ({
+        ...act,
+        creator: {
+          ...act.creator,
+          avatar: buildAvatarUrl(act.creator.avatar),
+        },
+      })),
+      page,
+      count,
+    };
   }
 }

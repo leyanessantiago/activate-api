@@ -56,7 +56,7 @@ export default async function seedConsumerRelations(prisma: PrismaClient) {
       const friendRelations: Relationship[] = friendsSlice.map((friend) => ({
         userAId: consumer.userId,
         userBId: friend.userId,
-        updatedBy: consumer.userId,
+        updatedBy: friend.userId,
         status: RelationshipStatus.ACCEPTED,
         createdOn: faker.date.past(0, new Date()),
         updatedOn: faker.date.past(0, new Date()),
