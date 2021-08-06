@@ -11,6 +11,8 @@ import { EventDTO } from './models/event';
 import { PagedResponse } from '../core/responses/paged-response';
 import buildImageUrl from '../helpers/build-image-url';
 import buildAvatarUrl from '../helpers/build-avatar-url';
+import findIfImGoing from './utils/find-if-im-going';
+import pickTopFriends from './utils/pick-top-friends';
 
 export interface UpcomingEventsQueryParams extends QueryParams {
   date?: string;
@@ -125,7 +127,7 @@ export class EventService {
 
     const results = upcomingEvents.map((event) => {
       const { author, image, followers, _count, ...rest } = event;
-      const relativesFollowers = followers.map((follower) => ({
+      const friends = followers.map((follower) => ({
         id: follower.consumer.user.id,
         avatar: buildAvatarUrl(follower.consumer.user.avatar),
       }));
@@ -137,7 +139,7 @@ export class EventService {
           ...author.user,
           avatar: buildAvatarUrl(author.user.avatar),
         },
-        relativesFollowers,
+        friends,
         followersCount: _count.followers,
         going: true,
       };
@@ -199,12 +201,7 @@ export class EventService {
       },
     });
 
-    const categories = interests.map((intrest) => intrest.categoryId);
-
-    console.log('------------------------------');
-    console.log(categories);
-    console.log(startDate);
-    console.log(startOfDay(new Date()));
+    const categories = interests.map((interest) => interest.categoryId);
 
     const dateFilter = startDate
       ? { gt: new Date(startDate) }
@@ -214,9 +211,6 @@ export class EventService {
       where: {
         categoryId: { in: categories },
         date: dateFilter,
-      },
-      orderBy: {
-        date: 'asc',
       },
       select: {
         id: true,
@@ -267,6 +261,9 @@ export class EventService {
                     },
                   },
                 },
+                {
+                  userId: user,
+                },
               ],
             },
           },
@@ -292,12 +289,12 @@ export class EventService {
     });
 
     const relevanceMap = buildRelevanceMap(interests);
-
     events.sort((a, b) => compareEvents(a, b, relevanceMap));
 
     return events.map((event) => {
       const { author, image, followers, _count, ...rest } = event;
-      const relativesFollowers = followers.slice(0, 4).map((follower) => ({
+      const amIGoing = findIfImGoing(followers, user);
+      const friends = pickTopFriends(followers, user).map((follower) => ({
         id: follower.consumer.user.id,
         avatar: buildAvatarUrl(follower.consumer.user.avatar),
       }));
@@ -309,9 +306,9 @@ export class EventService {
           ...author.user,
           avatar: buildAvatarUrl(author.user.avatar),
         },
-        relativesFollowers,
-        followersCount: _count.followers,
-        going: false,
+        friends,
+        followersCount: amIGoing ? _count.followers - 1 : _count.followers,
+        going: amIGoing,
       };
     });
   }

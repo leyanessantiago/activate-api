@@ -10,7 +10,7 @@ export interface EventDTO {
     name: string;
     avatar: string;
   };
-  relativesFollowers: {
+  friends: {
     id: string;
     avatar: string;
   }[];
