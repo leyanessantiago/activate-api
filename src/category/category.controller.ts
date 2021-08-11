@@ -14,6 +14,7 @@ import {
 } from './category.service';
 import { CategoryDto } from './dto/category.dto';
 import { PagedResponse } from '../core/responses/paged-response';
+import { Public } from '../core/jwt/public.decorator';
 
 @Controller('categories')
 export class CategoryController {
@@ -24,6 +25,7 @@ export class CategoryController {
     return this.categoryService.create(createCategoryDto);
   }
 
+  @Public()
   @Get()
   findAll(
     @Query('limit') limit: number,
@@ -38,6 +40,7 @@ export class CategoryController {
     return this.categoryService.findAll(queryParams);
   }
 
+  @Public()
   @Get('/tree')
   getTree(
     @Query('limit') limit: number,

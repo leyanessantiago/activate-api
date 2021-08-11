@@ -10,7 +10,7 @@ const loginUser = {
   email: 'ale@gmail.com',
   avatar: 'user4',
   verificationCode: 123456,
-  verificationLevel: VerificationLevel.INTERESTS_ADDED,
+  verificationLevel: VerificationLevel.USER_INFO_ADDED,
   theme: 'SummerVibes',
   useDarkStyle: true,
 };
