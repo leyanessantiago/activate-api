@@ -1,17 +1,14 @@
 import { IsEmail, Matches, IsNotEmpty } from 'class-validator';
+import { passwordValidation } from '../../constants/validation-rules';
+
+const { regex, message } = passwordValidation;
 
 export class LoginDto {
   @IsEmail({}, { message: 'This is not a valid email' })
   @IsNotEmpty()
   email: string;
 
-  @Matches(
-    /(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[\^$*.\[\]{}()?\-“!@#%&\/,><’:;|_~`])\S/,
-    {
-      message:
-        'The password must have an upper case and a lower case letter, a number and a special character.',
-    },
-  )
+  @Matches(regex, { message })
   @IsNotEmpty()
   password: string;
 }

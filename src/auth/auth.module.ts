@@ -4,12 +4,11 @@ import { AuthController } from './auth.controller';
 import { UserModule } from '../user/user.module';
 import { UserService } from '../user/user.service';
 import { PrismaModule } from '../prisma/prisma.module';
-import { SignUpValidationPipe } from './validators/sign-up-validator';
 import { JwtModule } from '@nestjs/jwt';
-import { LoginValidator } from './validators/login-validator';
 import { PrismaService } from '../prisma/prisma.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { MailModule } from '../mail/mail.module';
+import { GoogleStrategy } from '../core/social_auth/google.startegy';
 
 @Module({
   imports: [
@@ -25,13 +24,7 @@ import { MailModule } from '../mail/mail.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    UserService,
-    PrismaService,
-    SignUpValidationPipe,
-    LoginValidator,
-  ],
+  providers: [AuthService, UserService, PrismaService, GoogleStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

@@ -13,6 +13,6 @@ async function bootstrap() {
   app.useGlobalFilters(new ExceptionsFilter());
   app.setGlobalPrefix(API_PREFIX);
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
-  await app.listen(PORT || 3000);
+  await app.listen(PORT || 3001);
 }
 bootstrap();

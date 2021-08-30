@@ -6,10 +6,11 @@ import {
   Param,
   Patch,
   Post,
+  Req,
   Res,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
-  UsePipes,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -17,24 +18,22 @@ import { imageFilter, renameImageFile } from '../helpers/file-upload';
 import { Public } from '../core/jwt/public.decorator';
 import { CurrentUser } from '../core/jwt/current-user.decorator';
 import { ApiException } from '../core/exceptions/api-exception';
-import { SignUpDto } from './dto/sign-up.dto';
+import { SignUpDTO } from './dto/sign-up.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { AuthService } from './auth.service';
-import { SignUpValidationPipe } from './validators/sign-up-validator';
 import { ProfileDto } from './dto/profile.dto';
 import { IUserInfo } from './models/iuser-info';
-import { ChangePasswordValidator } from './validators/chage-password-validator';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
-  @UsePipes(SignUpValidationPipe)
   @Public()
-  async signUp(@Body() signUp: SignUpDto): Promise<IUserInfo> {
+  async signUp(@Body() signUp: SignUpDTO): Promise<IUserInfo> {
     const user = await this.authService.signUp(signUp);
 
     if (user) {
@@ -51,6 +50,19 @@ export class AuthController {
   @Public()
   async login(@Body() login: LoginDto): Promise<IUserInfo> {
     return this.authService.login(login);
+  }
+
+  @Get('social/:provider')
+  @Public()
+  @UseGuards(AuthGuard('google'))
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  googleAuth() {}
+
+  @Get('social/:provider/fallback')
+  @Public()
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req): Promise<any> {
+    return await this.authService.socialLogin(req.user);
   }
 
   @Patch('verify')
@@ -72,7 +84,7 @@ export class AuthController {
   @Patch('password')
   async updatePassword(
     @CurrentUser() currentUser: IUserInfo,
-    @Body(new ChangePasswordValidator()) credentials: ChangePasswordDto,
+    @Body() credentials: ChangePasswordDto,
   ): Promise<IUserInfo> {
     return this.authService.changePassword(currentUser.sub, credentials);
   }

@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { ValidationException } from '../core/exceptions/validation-exception';
 import { UserService } from '../user/user.service';
 import { ApiException } from '../core/exceptions/api-exception';
-import { SignUpDto } from './dto/sign-up.dto';
+import { SignUpDTO } from './dto/sign-up.dto';
 import { LoginDto } from './dto/login.dto';
 import { VerifyDto } from './dto/verify.dto';
 import { ProfileDto } from './dto/profile.dto';
@@ -24,11 +24,15 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
-  async signUp(signUp: SignUpDto): Promise<IUserInfo | null> {
-    const passwordHash = await bcrypt.hash(signUp.password, this.salt);
+  async signUp(signUpDTO: SignUpDTO): Promise<IUserInfo | null> {
+    const { email, password } = signUpDTO;
+
+    await this.checkIsUniqueEmail(email);
+
+    const passwordHash = await bcrypt.hash(password, this.salt);
 
     const userData: Prisma.UserCreateInput = {
-      email: signUp.email,
+      email,
       password: passwordHash,
       verificationCode: Math.floor(100000 + Math.random() * 900000),
     };
@@ -40,7 +44,7 @@ export class AuthService {
       user.verificationCode,
     );
 
-    return this.getUserInfo(user);
+    return this.getUserInfo(user, false);
   }
 
   async login(login: LoginDto): Promise<IUserInfo | null> {
@@ -154,12 +158,27 @@ export class AuthService {
     }
   }
 
-  getUserInfo(user: User): IUserInfo {
+  async socialLogin(socialProfileDTO: ProfileDto): Promise<IUserInfo> {
+    const { email } = socialProfileDTO;
+
+    const foundUser = await this.userService.findByEmail(email);
+
+    if (foundUser) {
+      return this.getUserInfo(foundUser);
+    }
+
+    const { user } = await this.userService.createConsumer(socialProfileDTO);
+
+    return this.getUserInfo(user, false);
+  }
+
+  getUserInfo(user: User, shouldBuildAvatarUrl = true): IUserInfo {
     const {
       id,
       email,
       userName,
       name,
+      lastName,
       avatar,
       theme,
       useDarkStyle,
@@ -167,18 +186,29 @@ export class AuthService {
     } = user;
 
     const payload = { email, sub: user.id };
-    const token = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload);
 
     return {
       sub: id,
       email,
       userName,
       name,
-      avatar: buildAvatarUrl(avatar),
+      lastName,
+      avatar: shouldBuildAvatarUrl ? buildAvatarUrl(avatar) : avatar,
       theme,
       useDarkStyle,
       verificationLevel,
-      accessToken: token,
+      accessToken,
     };
+  }
+
+  private async checkIsUniqueEmail(email: string): Promise<void> {
+    const foundUser = await this.userService.findByEmail(email);
+
+    if (foundUser) {
+      throw new ValidationException({
+        email: 'This email is currently in use.',
+      });
+    }
   }
 }
