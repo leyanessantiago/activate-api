@@ -1,15 +1,17 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { User, Prisma, Relationship } from '@prisma/client';
+import { Prisma, Relationship, User } from '@prisma/client';
 import { FollowerStatus, RelationshipStatus } from '../constants/user';
 import { ActivityType } from '../constants/activities';
 import { QueryParams } from '../constants/queries';
 import { ApiException } from '../core/exceptions/api-exception';
 import { PagedResponse } from '../core/responses/paged-response';
 import { PrismaService } from '../prisma/prisma.service';
-import { ConsumerDTO } from './models/consumer.dto';
-import { PublisherDTO } from './models/publisher.dto';
+import { ConsumerDTO } from './models/consumer';
+import { PublisherDTO } from './models/publisher';
 import { UserDTO } from './models/user.dto';
-import { getStatus } from './utils';
+import getStatus from './utils/get-status';
+import buildPublisherDto from './utils/build-publisher-dto';
+import buildAvatarUrl from '../helpers/build-avatar-url';
 
 @Injectable()
 export class UserService {
@@ -87,19 +89,9 @@ export class UserService {
       where: filters,
     });
 
-    const results = publishers.map((entry) => {
-      const {
-        publisher: { user },
-        status,
-      } = entry;
-
-      return {
-        ...user,
-        followers: undefined,
-        events: undefined,
-        followerStatus: status,
-      } as PublisherDTO;
-    });
+    const results = publishers.map(({ publisher }) =>
+      buildPublisherDto({ publisher, currentUser }),
+    );
 
     return { results, page, count };
   }
@@ -284,100 +276,6 @@ export class UserService {
     return { results, page, count };
   }
 
-  async findUsersIBlocked(currentUser: string): Promise<UserDTO[]> {
-    const results = await this.prismaService.relationship.findMany({
-      where: {
-        OR: [{ userAId: currentUser }, { userBId: currentUser }],
-        AND: {
-          status: RelationshipStatus.BLOCKED,
-          updatedBy: currentUser,
-        },
-      },
-      orderBy: {
-        createdOn: 'asc',
-      },
-      select: {
-        userA: {
-          select: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-                userName: true,
-              },
-            },
-          },
-        },
-        userB: {
-          select: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-                userName: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return results.map((relation) => {
-      const { userA, userB } = relation;
-      const user = (userA && userA.user) || (userB && userB.user);
-      return user;
-    });
-  }
-
-  async findUsersWhoBlockedMe(currentUser: string): Promise<UserDTO[]> {
-    const results = await this.prismaService.relationship.findMany({
-      where: {
-        OR: [{ userAId: currentUser }, { userBId: currentUser }],
-        AND: {
-          status: RelationshipStatus.BLOCKED,
-          updatedBy: { not: currentUser },
-        },
-      },
-      orderBy: {
-        createdOn: 'asc',
-      },
-      select: {
-        userA: {
-          select: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-                userName: true,
-              },
-            },
-          },
-        },
-        userB: {
-          select: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-                userName: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return results.map((relation) => {
-      const { userA, userB } = relation;
-      const user = (userA && userA.user) || (userB && userB.user);
-      return user;
-    });
-  }
-
   async findMyUsersToAvoid(currentUser: string): Promise<UserDTO[]> {
     const results = await this.prismaService.relationship.findMany({
       where: {
@@ -419,71 +317,8 @@ export class UserService {
 
     return results.map((relation) => {
       const { userA, userB } = relation;
-      const user = (userA && userA.user) || (userB && userB.user);
-      return user;
+      return (userA && userA.user) || (userB && userB.user);
     });
-  }
-
-  async findPublishersIBlocked(currentUser: string): Promise<UserDTO[]> {
-    const results = await this.prismaService.follower.findMany({
-      where: {
-        consumerId: currentUser,
-        AND: {
-          status: FollowerStatus.BLOCKED,
-          updatedBy: currentUser,
-        },
-      },
-      orderBy: {
-        createdOn: 'asc',
-      },
-      select: {
-        publisher: {
-          select: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-                userName: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return results.map((relation) => relation.publisher.user);
-  }
-
-  async findPublishersWhoBlockedMe(currentUser: string): Promise<UserDTO[]> {
-    const results = await this.prismaService.follower.findMany({
-      where: {
-        consumerId: currentUser,
-        AND: {
-          status: RelationshipStatus.BLOCKED,
-          updatedBy: { not: currentUser },
-        },
-      },
-      orderBy: {
-        createdOn: 'asc',
-      },
-      select: {
-        publisher: {
-          select: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-                userName: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    return results.map((relation) => relation.publisher.user);
   }
 
   async findMyPublishersToAvoid(currentUser: string): Promise<UserDTO[]> {
@@ -565,15 +400,9 @@ export class UserService {
       where: filters,
     });
 
-    const results = following.map(({ publisher: { user, followers } }) => ({
-      ...user,
-      events: undefined,
-      followers: undefined,
-      followerStatus:
-        followers && followers.length > 0
-          ? followers[0].status
-          : FollowerStatus.UNRELATED,
-    }));
+    const results = following.map(({ publisher }) =>
+      buildPublisherDto({ publisher, currentUser }),
+    );
 
     return { results, page, count };
   }
@@ -586,21 +415,16 @@ export class UserService {
     const { page, limit } = queryParams;
     const usersToAvoid = await this.findMyUsersToAvoid(currentUser);
     const ids = usersToAvoid.map((user) => user.id);
+    ids.push(currentUser);
     const filters = {
       OR: [
         {
           userAId: consumerId,
-          AND: {
-            userAId: { notIn: ids },
-            userBId: { not: currentUser },
-          },
+          userBId: { notIn: ids },
         },
         {
           userBId: consumerId,
-          AND: {
-            userBId: { notIn: ids },
-            userAId: { not: currentUser },
-          },
+          userAId: { notIn: ids },
         },
       ],
       AND: {
@@ -631,17 +455,21 @@ export class UserService {
             relatives: {
               where: {
                 userBId: currentUser,
+                status: { not: RelationshipStatus.BLOCKED },
               },
               select: {
                 status: true,
+                updatedBy: true,
               },
             },
             relatedTo: {
               where: {
                 userAId: currentUser,
+                status: { not: RelationshipStatus.BLOCKED },
               },
               select: {
                 status: true,
+                updatedBy: true,
               },
             },
           },
@@ -838,6 +666,16 @@ export class UserService {
           },
           select: {
             status: true,
+            consumer: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    avatar: true,
+                  },
+                },
+              },
+            },
           },
         },
         _count: {
@@ -849,19 +687,7 @@ export class UserService {
       },
     });
 
-    const {
-      user,
-      followers,
-      _count: { events, followers: followersCount },
-    } = publisher;
-
-    return {
-      ...user,
-      events,
-      followers: followersCount,
-      followerStatus:
-        followers.length > 0 ? followers[0].status : FollowerStatus.UNRELATED,
-    };
+    return buildPublisherDto({ publisher, currentUser });
   }
 
   async findConsumerById(
@@ -933,10 +759,323 @@ export class UserService {
 
     return {
       ...user,
-      following,
-      friends: friendsCount,
+      count: {
+        following,
+        friends: friendsCount,
+      },
       relationStatus: status,
     } as ConsumerDTO;
+  }
+
+  async searchPublishers(
+    term: string,
+    currentUser: string,
+  ): Promise<PublisherDTO[]> {
+    const publishersToAvoid = await this.findMyPublishersToAvoid(currentUser);
+    const ids = publishersToAvoid.map((p) => p.id);
+    const publishers = await this.prismaService.publisher.findMany({
+      where: {
+        userId: { notIn: ids },
+        user: {
+          name: { contains: term, mode: 'insensitive' },
+          userName: { contains: term, mode: 'insensitive' },
+        },
+      },
+      orderBy: {
+        user: {
+          userName: 'asc',
+        },
+      },
+      select: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            userName: true,
+          },
+        },
+        followers: {
+          where: {
+            consumer: {
+              OR: [
+                {
+                  relatives: {
+                    some: {
+                      OR: [
+                        { status: RelationshipStatus.ACCEPTED },
+                        { status: RelationshipStatus.MUTED },
+                      ],
+                      AND: {
+                        userBId: currentUser,
+                      },
+                    },
+                  },
+                },
+                {
+                  relatedTo: {
+                    some: {
+                      OR: [
+                        { status: RelationshipStatus.ACCEPTED },
+                        { status: RelationshipStatus.MUTED },
+                      ],
+                      AND: {
+                        userAId: currentUser,
+                      },
+                    },
+                  },
+                },
+                {
+                  userId: currentUser,
+                },
+              ],
+            },
+          },
+          select: {
+            status: true,
+            consumer: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    avatar: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            followers: true,
+            events: true,
+          },
+        },
+      },
+    });
+
+    return publishers.map((publisher) =>
+      buildPublisherDto({ publisher, currentUser, pickFriends: true }),
+    );
+  }
+
+  async searchConsumers(
+    term: string,
+    currentUser: string,
+  ): Promise<ConsumerDTO[]> {
+    const usersToAvoid = await this.findMyUsersToAvoid(currentUser);
+    const ids = usersToAvoid.map((user) => user.id);
+    ids.push(currentUser);
+
+    const consumers = await this.prismaService.consumer.findMany({
+      where: {
+        userId: { notIn: ids },
+        user: {
+          name: { contains: term, mode: 'insensitive' },
+          userName: { contains: term, mode: 'insensitive' },
+        },
+      },
+      select: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+            userName: true,
+          },
+        },
+        _count: {
+          select: {
+            following: true,
+          },
+        },
+      },
+    });
+
+    const sortByName = (a, b) => {
+      const aName = a.user.name.toLowerCase();
+      const bName = b.user.name.toLowerCase();
+
+      return aName.localeCompare(bName);
+    };
+    consumers.sort(sortByName);
+
+    const extendedConsumers: ConsumerDTO[] = [];
+
+    for (const consumer of consumers) {
+      const { user, _count } = consumer;
+      const [
+        currentUserRelation,
+      ] = await this.prismaService.relationship.findMany({
+        where: {
+          OR: [
+            { userAId: user.id, AND: { userBId: currentUser } },
+            { userBId: user.id, AND: { userAId: currentUser } },
+          ],
+        },
+        select: {
+          status: true,
+          updatedBy: true,
+        },
+      });
+      const status = getStatus(
+        currentUserRelation as Relationship,
+        currentUser,
+      );
+
+      const friends = await this.prismaService.relationship.findMany({
+        take: 4,
+        where: {
+          AND: [
+            {
+              OR: [
+                {
+                  userAId: user.id,
+                  AND: {
+                    userB: {
+                      userId: { notIn: ids },
+                      AND: {
+                        OR: [
+                          {
+                            relatives: {
+                              some: {
+                                userBId: currentUser,
+                                AND: {
+                                  OR: [
+                                    { status: RelationshipStatus.ACCEPTED },
+                                    { status: RelationshipStatus.MUTED },
+                                  ],
+                                },
+                              },
+                            },
+                          },
+                          {
+                            relatedTo: {
+                              some: {
+                                userAId: currentUser,
+                                AND: {
+                                  OR: [
+                                    { status: RelationshipStatus.ACCEPTED },
+                                    { status: RelationshipStatus.MUTED },
+                                  ],
+                                },
+                              },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+                {
+                  userBId: user.id,
+                  AND: {
+                    userA: {
+                      userId: { notIn: ids },
+                      AND: {
+                        OR: [
+                          {
+                            relatives: {
+                              some: {
+                                userBId: currentUser,
+                                AND: {
+                                  OR: [
+                                    { status: RelationshipStatus.ACCEPTED },
+                                    { status: RelationshipStatus.MUTED },
+                                  ],
+                                },
+                              },
+                            },
+                          },
+                          {
+                            relatedTo: {
+                              some: {
+                                userAId: currentUser,
+                                AND: {
+                                  OR: [
+                                    { status: RelationshipStatus.ACCEPTED },
+                                    { status: RelationshipStatus.MUTED },
+                                  ],
+                                },
+                              },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+            {
+              OR: [
+                { status: RelationshipStatus.ACCEPTED },
+                { status: RelationshipStatus.MUTED },
+              ],
+            },
+          ],
+        },
+        select: {
+          userA: {
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  avatar: true,
+                },
+              },
+            },
+          },
+          userB: {
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  avatar: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      const normalizedFriends = friends.map(({ userA, userB }) => {
+        const { user } = userA || userB;
+
+        return {
+          id: user.id,
+          avatar: buildAvatarUrl(user.avatar),
+        };
+      });
+
+      const friendsCount = await this.prismaService.relationship.count({
+        where: {
+          AND: [
+            { OR: [{ userAId: user.id }, { userBId: user.id }] },
+            {
+              OR: [
+                { status: RelationshipStatus.MUTED },
+                { status: RelationshipStatus.ACCEPTED },
+              ],
+            },
+          ],
+        },
+      });
+
+      extendedConsumers.push({
+        ...user,
+        friends: normalizedFriends,
+        count: {
+          friends: friendsCount,
+          following: _count.following,
+        },
+        relationStatus: status,
+      });
+    }
+
+    return extendedConsumers;
   }
 
   async sendFriendRequest(currentUser: string, consumer: string) {

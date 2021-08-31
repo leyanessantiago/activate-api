@@ -1,7 +1,7 @@
 import { Relationship } from '.prisma/client';
-import { RelationshipStatus } from '../constants/user';
+import { RelationshipStatus } from '../../constants/user';
 
-export function getStatus(
+export default function getStatus(
   relation: Relationship,
   currentUser: string,
 ): RelationshipStatus {
@@ -14,10 +14,6 @@ export function getStatus(
 
   if (status === RelationshipStatus.PENDING && !updatedByMe) {
     return RelationshipStatus.PENDING_YOU;
-  }
-
-  if (status === RelationshipStatus.BLOCKED && !updatedByMe) {
-    return RelationshipStatus.BLOCKED_YOU;
   }
 
   return status;
