@@ -11,7 +11,6 @@ export interface PublisherDTO extends UserDTO {
 }
 
 export interface PublisherQuery {
-  status?: FollowerStatus;
   user: {
     id: string;
     userName: string;

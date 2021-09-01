@@ -5,12 +5,13 @@ import pickTopFriends from './pick-top-friends';
 interface Params {
   publisher: PublisherQuery;
   currentUser: string;
+  status?: FollowerStatus;
   pickFriends?: boolean;
 }
 
 export default function buildPublisherDto(params: Params): PublisherDTO {
-  const { publisher, currentUser, pickFriends } = params;
-  const { status, user, followers, _count } = publisher;
+  const { publisher, currentUser, status, pickFriends } = params;
+  const { user, followers, _count } = publisher;
   const me = followers?.find(
     (follower) => follower.consumer.user.id === currentUser,
   );

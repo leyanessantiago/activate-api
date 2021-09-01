@@ -50,11 +50,11 @@ export class UserService {
     queryParams: QueryParams,
   ): Promise<PagedResponse<PublisherDTO>> {
     const { page, limit } = queryParams;
+    const publishersToAvoid = await this.findMyPublishersToAvoid(currentUser);
+    const ids = publishersToAvoid.map((p) => p.id);
     const filters = {
       consumerId: currentUser,
-      AND: {
-        status: { not: FollowerStatus.BLOCKED },
-      },
+      publisherId: { notIn: ids },
     };
 
     const publishers = await this.prismaService.follower.findMany({
@@ -89,8 +89,8 @@ export class UserService {
       where: filters,
     });
 
-    const results = publishers.map(({ publisher }) =>
-      buildPublisherDto({ publisher, currentUser }),
+    const results = publishers.map(({ publisher, status }) =>
+      buildPublisherDto({ publisher, status, currentUser }),
     );
 
     return { results, page, count };
