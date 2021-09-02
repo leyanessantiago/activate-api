@@ -1,6 +1,5 @@
 import { Controller, Get, Param, Res, Query } from '@nestjs/common';
 import { EventService, UpcomingEventsQueryParams } from './event.service';
-import { Event } from '.prisma/client';
 import { Public } from '../core/jwt/public.decorator';
 import { CurrentUser } from '../core/jwt/current-user.decorator';
 import { IUserInfo } from '../auth/models/iuser-info';
@@ -49,8 +48,27 @@ export class EventController {
   }
 
   @Get('publishedBy/:id')
-  async getEventsByPublisher(@Param('id') id: string): Promise<Event[]> {
-    return await this.eventService.findEventsByPublisher(id);
+  async getEventsByPublisher(
+    @Param('id') publisher: string,
+    @CurrentUser() user: IUserInfo,
+  ): Promise<EventDTO[]> {
+    return await this.eventService.findEventsPublishedBy(publisher, user.sub);
+  }
+
+  @Get('attended-by/:id')
+  async getEventsAttendedBy(
+    @Param('id') consumer: string,
+    @CurrentUser() user: IUserInfo,
+  ): Promise<EventDTO[]> {
+    return await this.eventService.findEventsAttendedBy(consumer, user.sub);
+  }
+
+  @Get('search/:term')
+  async searchEvents(
+    @Param('term') term: string,
+    @CurrentUser() user: IUserInfo,
+  ): Promise<EventDTO[]> {
+    return await this.eventService.searchEvents(term.toLowerCase(), user.sub);
   }
 
   @Get(':id/follow')

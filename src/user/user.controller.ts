@@ -3,8 +3,8 @@ import { UserService } from './user.service';
 import { IUserInfo } from '../auth/models/iuser-info';
 import { CurrentUser } from '../core/jwt/current-user.decorator';
 import { PagedResponse } from '../core/responses/paged-response';
-import { PublisherDTO } from './models/publisher.dto';
-import { ConsumerDTO } from './models/consumer.dto';
+import { PublisherDTO } from './models/publisher';
+import { ConsumerDTO } from './models/consumer';
 import { UserDTO } from './models/user.dto';
 
 @Controller('users')
@@ -50,6 +50,22 @@ export class UserController {
     @Query('limit') limit: number,
   ): Promise<PagedResponse<UserDTO>> {
     return this.userService.findMyFollowers(user.sub, { page, limit });
+  }
+
+  @Get('search/publishers/:term')
+  async searchPublishers(
+    @CurrentUser() user: IUserInfo,
+    @Param('term') term: string,
+  ): Promise<PublisherDTO[]> {
+    return this.userService.searchPublishers(term, user.sub);
+  }
+
+  @Get('search/consumers/:term')
+  async searchConsumers(
+    @CurrentUser() user: IUserInfo,
+    @Param('term') term: string,
+  ): Promise<ConsumerDTO[]> {
+    return this.userService.searchConsumers(term, user.sub);
   }
 
   @Get(':id/friends')

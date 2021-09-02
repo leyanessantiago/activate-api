@@ -1,7 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { endOfDay, startOfDay } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
-import { Event } from '.prisma/client';
 import { ApiException } from '../core/exceptions/api-exception';
 import { RelationshipStatus } from '../constants/user';
 import buildRelevanceMap from './utils/build-relevance-map';
@@ -11,8 +10,7 @@ import { EventDTO } from './models/event';
 import { PagedResponse } from '../core/responses/paged-response';
 import buildImageUrl from '../helpers/build-image-url';
 import buildAvatarUrl from '../helpers/build-avatar-url';
-import findIfImGoing from './utils/find-if-im-going';
-import pickTopFriends from './utils/pick-top-friends';
+import { buildEventDto } from './utils/build-event-dto';
 
 export interface UpcomingEventsQueryParams extends QueryParams {
   date?: string;
@@ -291,37 +289,279 @@ export class EventService {
     const relevanceMap = buildRelevanceMap(interests);
     events.sort((a, b) => compareEvents(a, b, relevanceMap));
 
-    return events.map((event) => {
-      const { author, image, followers, _count, ...rest } = event;
-      const amIGoing = findIfImGoing(followers, user);
-      const friends = pickTopFriends(followers, user).map((follower) => ({
-        id: follower.consumer.user.id,
-        avatar: buildAvatarUrl(follower.consumer.user.avatar),
-      }));
-
-      return {
-        ...rest,
-        image: buildImageUrl(`events/image/${image}`),
-        author: {
-          ...author.user,
-          avatar: buildAvatarUrl(author.user.avatar),
-        },
-        friends,
-        followersCount: amIGoing ? _count.followers - 1 : _count.followers,
-        going: amIGoing,
-      };
-    });
+    return events.map((event) => buildEventDto(event, user));
   }
 
-  async findEventsByPublisher(id: string): Promise<Event[]> {
-    return await this.prismaService.event.findMany({
+  async findEventsPublishedBy(
+    publisher: string,
+    user: string,
+  ): Promise<EventDTO[]> {
+    const events = await this.prismaService.event.findMany({
       where: {
-        authorId: id,
+        authorId: publisher,
       },
-      include: {
-        category: true,
+      select: {
+        id: true,
+        name: true,
+        date: true,
+        image: true,
+        address: true,
+        description: true,
+        categoryId: true,
+        author: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        followers: {
+          where: {
+            consumer: {
+              OR: [
+                {
+                  relatives: {
+                    some: {
+                      OR: [
+                        { status: RelationshipStatus.ACCEPTED },
+                        { status: RelationshipStatus.MUTED },
+                      ],
+                      AND: {
+                        userBId: user,
+                      },
+                    },
+                  },
+                },
+                {
+                  relatedTo: {
+                    some: {
+                      OR: [
+                        { status: RelationshipStatus.ACCEPTED },
+                        { status: RelationshipStatus.MUTED },
+                      ],
+                      AND: {
+                        userAId: user,
+                      },
+                    },
+                  },
+                },
+                {
+                  userId: user,
+                },
+              ],
+            },
+          },
+          select: {
+            consumer: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    avatar: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            followers: true,
+          },
+        },
       },
     });
+
+    return events.map((event) => buildEventDto(event, user));
+  }
+
+  async findEventsAttendedBy(
+    consumer: string,
+    user: string,
+  ): Promise<EventDTO[]> {
+    const events = await this.prismaService.event.findMany({
+      where: {
+        followers: {
+          some: {
+            consumerId: consumer,
+          },
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        date: true,
+        image: true,
+        address: true,
+        description: true,
+        categoryId: true,
+        author: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        followers: {
+          where: {
+            consumer: {
+              OR: [
+                {
+                  relatives: {
+                    some: {
+                      OR: [
+                        { status: RelationshipStatus.ACCEPTED },
+                        { status: RelationshipStatus.MUTED },
+                      ],
+                      AND: {
+                        userBId: user,
+                      },
+                    },
+                  },
+                },
+                {
+                  relatedTo: {
+                    some: {
+                      OR: [
+                        { status: RelationshipStatus.ACCEPTED },
+                        { status: RelationshipStatus.MUTED },
+                      ],
+                      AND: {
+                        userAId: user,
+                      },
+                    },
+                  },
+                },
+                {
+                  userId: user,
+                },
+              ],
+            },
+          },
+          select: {
+            consumer: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    avatar: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            followers: true,
+          },
+        },
+      },
+    });
+
+    return events.map((event) => buildEventDto(event, user));
+  }
+
+  async searchEvents(term: string, user: string): Promise<EventDTO[]> {
+    const events = await this.prismaService.event.findMany({
+      where: {
+        OR: [
+          { name: { contains: term, mode: 'insensitive' } },
+          { address: { contains: term, mode: 'insensitive' } },
+          {
+            author: {
+              user: {
+                name: { contains: term, mode: 'insensitive' },
+              },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        name: true,
+        date: true,
+        image: true,
+        address: true,
+        description: true,
+        categoryId: true,
+        author: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        followers: {
+          where: {
+            consumer: {
+              OR: [
+                {
+                  relatives: {
+                    some: {
+                      OR: [
+                        { status: RelationshipStatus.ACCEPTED },
+                        { status: RelationshipStatus.MUTED },
+                      ],
+                      AND: {
+                        userBId: user,
+                      },
+                    },
+                  },
+                },
+                {
+                  relatedTo: {
+                    some: {
+                      OR: [
+                        { status: RelationshipStatus.ACCEPTED },
+                        { status: RelationshipStatus.MUTED },
+                      ],
+                      AND: {
+                        userAId: user,
+                      },
+                    },
+                  },
+                },
+                {
+                  userId: user,
+                },
+              ],
+            },
+          },
+          select: {
+            consumer: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    avatar: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            followers: true,
+          },
+        },
+      },
+    });
+
+    return events.map((event) => buildEventDto(event, user));
   }
 
   async followEvent(user: string, event: string): Promise<any> {
