@@ -1,7 +1,24 @@
-import buildAvatarUrl from '../../helpers/build-avatar-url';
-import { SimpleConsumer } from '../models/simple-consumer';
+import buildAvatarUrl from './build-avatar-url';
 
-export default function pickTopFriends(
+export interface SimpleConsumer {
+  consumer: {
+    user: {
+      id: string;
+      avatar: string;
+    };
+  };
+}
+
+export function findIfImGoing(
+  followers: SimpleConsumer[],
+  currentUser: string,
+) {
+  return followers.some(
+    (follower) => follower.consumer.user.id === currentUser,
+  );
+}
+
+export function pickTopFriends(
   followers: SimpleConsumer[],
   currentUser: string,
 ) {

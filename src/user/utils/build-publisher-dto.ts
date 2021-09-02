@@ -1,6 +1,6 @@
 import { FollowerStatus } from '../../constants/user';
+import { pickTopFriends } from '../../helpers/consumers';
 import { PublisherDTO, PublisherQuery } from '../models/publisher';
-import pickTopFriends from './pick-top-friends';
 
 interface Params {
   publisher: PublisherQuery;

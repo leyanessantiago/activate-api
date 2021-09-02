@@ -1,9 +1,8 @@
 import { EventDTO } from '../models/event';
-import findIfImGoing from './find-if-im-going';
-import pickTopFriends from './pick-top-friends';
 import buildAvatarUrl from '../../helpers/build-avatar-url';
 import buildImageUrl from '../../helpers/build-image-url';
 import { QueryEvent } from '../models/query-event';
+import { findIfImGoing, pickTopFriends } from '../../helpers/consumers';
 
 export function buildEventDto(event: QueryEvent, user: string): EventDTO {
   const { author, image, followers, _count, ...rest } = event;
