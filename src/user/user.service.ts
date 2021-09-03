@@ -136,7 +136,10 @@ export class UserService {
     const count = await this.prismaService.follower.count({
       where: filters,
     });
-    const results = followers.map((f) => f.consumer.user);
+    const results = followers.map((f) => ({
+      ...f.consumer.user,
+      avatar: buildAvatarUrl(f.consumer.user.avatar),
+    }));
 
     return { results, page, count };
   }
@@ -209,6 +212,7 @@ export class UserService {
 
       return {
         ...user,
+        avatar: buildAvatarUrl(user.avatar),
         following: undefined,
         friends: undefined,
         relationStatus: relation.status,
@@ -267,6 +271,7 @@ export class UserService {
 
       return {
         ...user,
+        avatar: buildAvatarUrl(user.avatar),
         following: undefined,
         friends: undefined,
         relationStatus: relation.status,
@@ -528,8 +533,7 @@ export class UserService {
 
       return {
         ...user,
-        following: undefined,
-        friends: undefined,
+        avatar: buildAvatarUrl(user.avatar),
         relationStatus: status,
       };
     });
@@ -608,8 +612,7 @@ export class UserService {
 
       return {
         ...user,
-        following: undefined,
-        friends: undefined,
+        avatar: buildAvatarUrl(user.avatar),
         relationStatus: status,
       } as ConsumerDTO;
     });
@@ -759,6 +762,7 @@ export class UserService {
 
     return {
       ...user,
+      avatar: buildAvatarUrl(user.avatar),
       count: {
         following,
         friends: friendsCount,
@@ -1066,6 +1070,7 @@ export class UserService {
 
       extendedConsumers.push({
         ...user,
+        avatar: buildAvatarUrl(user.avatar),
         friends: normalizedFriends,
         count: {
           friends: friendsCount,

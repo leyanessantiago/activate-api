@@ -1,6 +1,7 @@
 import { FollowerStatus } from '../../constants/user';
 import { pickTopFriends } from '../../helpers/consumers';
 import { PublisherDTO, PublisherQuery } from '../models/publisher';
+import buildAvatarUrl from '../../helpers/build-avatar-url';
 
 interface Params {
   publisher: PublisherQuery;
@@ -21,6 +22,7 @@ export default function buildPublisherDto(params: Params): PublisherDTO {
 
   return {
     ...user,
+    avatar: buildAvatarUrl(user.avatar),
     friends,
     count: {
       events: _count?.events,
