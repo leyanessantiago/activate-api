@@ -17,7 +17,7 @@ export function buildEventDto(event: QueryEvent, user: string): EventDTO {
       avatar: buildAvatarUrl(author.user.avatar),
     },
     friends,
-    followersCount: _count.followers,
+    followersCount: _count?.followers,
     going: amIGoing,
   };
 }

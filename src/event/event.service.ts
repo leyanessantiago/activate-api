@@ -564,6 +564,105 @@ export class EventService {
     return events.map((event) => buildEventDto(event, user));
   }
 
+  async getById(eventId: string, currentUser: string): Promise<EventDTO> {
+    const event = await this.prismaService.event.findUnique({
+      where: {
+        id: eventId,
+      },
+      select: {
+        id: true,
+        name: true,
+        date: true,
+        image: true,
+        address: true,
+        comments: {
+          select: {
+            author: {
+              select: {
+                id: true,
+                name: true,
+                userName: true,
+                avatar: true,
+              },
+            },
+            content: true,
+            response: true,
+            createdOn: true,
+            respondedOn: true,
+          },
+        },
+        author: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                userName: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        followers: {
+          where: {
+            consumer: {
+              OR: [
+                {
+                  relatives: {
+                    some: {
+                      OR: [
+                        { status: RelationshipStatus.ACCEPTED },
+                        { status: RelationshipStatus.MUTED },
+                      ],
+                      AND: {
+                        userBId: currentUser,
+                      },
+                    },
+                  },
+                },
+                {
+                  relatedTo: {
+                    some: {
+                      OR: [
+                        { status: RelationshipStatus.ACCEPTED },
+                        { status: RelationshipStatus.MUTED },
+                      ],
+                      AND: {
+                        userAId: currentUser,
+                      },
+                    },
+                  },
+                },
+                {
+                  userId: currentUser,
+                },
+              ],
+            },
+          },
+          select: {
+            consumer: {
+              select: {
+                user: {
+                  select: {
+                    id: true,
+                    avatar: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            followers: true,
+          },
+        },
+      },
+    });
+
+    return buildEventDto(event, currentUser);
+  }
+
   async followEvent(user: string, event: string): Promise<any> {
     const relation = await this.prismaService.eventFollower.findUnique({
       where: {
