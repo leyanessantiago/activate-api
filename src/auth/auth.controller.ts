@@ -52,16 +52,29 @@ export class AuthController {
     return this.authService.login(login);
   }
 
-  @Get('social/:provider')
+  @Get('social/google')
   @Public()
   @UseGuards(AuthGuard('google'))
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   googleAuth() {}
 
-  @Get('social/:provider/fallback')
+  @Get('social/google/fallback')
   @Public()
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req): Promise<any> {
+  async googleAuthRedirect(@Req() req): Promise<IUserInfo> {
+    return await this.authService.socialLogin(req.user);
+  }
+
+  @Get('social/facebook')
+  @Public()
+  @UseGuards(AuthGuard('facebook'))
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  facebookAuth() {}
+
+  @Get('social/facebook/fallback')
+  @Public()
+  @UseGuards(AuthGuard('facebook'))
+  async facebookAuthRedirect(@Req() req): Promise<IUserInfo> {
     return await this.authService.socialLogin(req.user);
   }
 

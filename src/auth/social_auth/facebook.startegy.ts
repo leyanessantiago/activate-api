@@ -1,19 +1,20 @@
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback } from 'passport-google-oauth20';
+import { Strategy } from 'passport-facebook';
 import { Injectable } from '@nestjs/common';
-import { ProfileDto } from '../../auth/dto/profile.dto';
+import { ProfileDto } from '../dto/profile.dto';
 import { SocialStrategy } from './social.startegy';
 
 @Injectable()
-export class GoogleStrategy
-  extends PassportStrategy(Strategy, 'google')
+export class FacebookStrategy
+  extends PassportStrategy(Strategy, 'facebook')
   implements SocialStrategy {
   constructor() {
     super({
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
-      scope: ['email', 'profile'],
+      clientID: process.env.FACEBOOK_ID,
+      clientSecret: process.env.FACEBOOK_SECRET,
+      callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+      scope: 'email',
+      profileFields: ['emails', 'name', 'photos', 'profileUrl'],
     });
   }
 
@@ -21,7 +22,7 @@ export class GoogleStrategy
     accessToken: string,
     refreshToken: string,
     profile: any,
-    done: VerifyCallback,
+    done: (err: any, user: any, info?: any) => void,
   ): Promise<any> {
     const { name, emails, photos } = profile;
     const user: ProfileDto = {

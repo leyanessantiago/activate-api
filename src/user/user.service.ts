@@ -646,6 +646,14 @@ export class UserService {
     });
   }
 
+  async findUsersContainingUserName(userName: string): Promise<User[]> {
+    return this.prismaService.user.findMany({
+      where: {
+        userName: { contains: userName },
+      },
+    });
+  }
+
   async findPublisherById(
     id: string,
     currentUser: string,
