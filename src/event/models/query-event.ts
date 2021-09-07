@@ -7,6 +7,7 @@ export interface QueryEvent {
   address: string;
   description?: string;
   comments?: {
+    id: string;
     author: {
       id: string;
       name: string;

@@ -577,6 +577,7 @@ export class EventService {
         address: true,
         comments: {
           select: {
+            id: true,
             author: {
               select: {
                 id: true,
