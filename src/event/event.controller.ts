@@ -71,6 +71,14 @@ export class EventController {
     return await this.eventService.searchEvents(term.toLowerCase(), user.sub);
   }
 
+  @Get(':id/details')
+  async getById(
+    @Param('id') eventId: string,
+    @CurrentUser() user: IUserInfo,
+  ): Promise<EventDTO> {
+    return await this.eventService.getById(eventId, user.sub);
+  }
+
   @Get(':id/follow')
   async followEvent(
     @CurrentUser() user: IUserInfo,

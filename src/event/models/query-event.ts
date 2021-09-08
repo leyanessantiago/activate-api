@@ -1,15 +1,29 @@
 export interface QueryEvent {
-  categoryId: string;
+  categoryId?: string;
   id: string;
   name: string;
   date: Date;
   image: string;
   address: string;
-  description: string;
+  description?: string;
+  comments?: {
+    id: string;
+    author: {
+      id: string;
+      name: string;
+      userName: string;
+      avatar: string;
+    };
+    content: string;
+    response: string;
+    createdOn: Date;
+    respondedOn: Date;
+  }[];
   author: {
     user: {
       id: string;
       name: string;
+      userName?: string;
       avatar: string;
     };
   };
@@ -21,7 +35,7 @@ export interface QueryEvent {
       };
     };
   }[];
-  _count: {
+  _count?: {
     followers: number;
   };
 }

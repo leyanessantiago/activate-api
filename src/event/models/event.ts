@@ -4,16 +4,32 @@ export interface EventDTO {
   date: Date;
   image: string;
   address: string;
-  description: string;
+  description?: string;
+  comments?: Comment[];
   author: {
     id: string;
     name: string;
+    userName?: string;
     avatar: string;
   };
-  friends: {
+  friends?: {
     id: string;
     avatar: string;
   }[];
-  followersCount: number;
+  followersCount?: number;
   going: boolean;
+}
+
+interface Comment {
+  id: string;
+  author: {
+    id: string;
+    name: string;
+    userName: string;
+    avatar: string;
+  };
+  content: string;
+  response: string;
+  createdOn: Date;
+  respondedOn: Date;
 }
