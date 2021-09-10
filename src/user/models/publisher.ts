@@ -22,7 +22,7 @@ export interface PublisherQuery {
     consumer?: {
       user: {
         id: string;
-        avatar: string;
+        avatar?: string;
       };
     };
   }[];
