@@ -390,6 +390,15 @@ export class UserService {
               },
               select: {
                 status: true,
+                consumer: {
+                  select: {
+                    user: {
+                      select: {
+                        id: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
