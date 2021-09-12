@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { endOfDay, startOfDay } from 'date-fns';
+import { startOfDay } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApiException } from '../core/exceptions/api-exception';
 import { RelationshipStatus } from '../constants/user';
@@ -24,23 +24,10 @@ export class EventService {
     currentUserId: string,
     queryParams: UpcomingEventsQueryParams,
   ): Promise<PagedResponse<EventDTO>> {
-    const { limit, page, date } = queryParams;
+    const { limit, page } = queryParams;
 
     const where = {
       followers: { some: { consumerId: currentUserId } },
-      AND: [
-        {
-          date: {
-            gte: new Date(),
-          },
-        },
-        {
-          date: {
-            gte: startOfDay(new Date(date)),
-            lte: endOfDay(new Date(date)),
-          },
-        },
-      ],
     };
 
     const upcomingEvents = await this.prismaService.event.findMany({

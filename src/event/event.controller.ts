@@ -15,12 +15,10 @@ export class EventController {
     @CurrentUser() user: IUserInfo,
     @Query('page') page: number,
     @Query('limit') limit: number,
-    @Query('date') date: string,
   ): Promise<PagedResponse<EventDTO>> {
     const queryParams: UpcomingEventsQueryParams = {
       page,
       limit,
-      date,
     };
     return this.eventService.findMyUpcomingEvents(user.sub, queryParams);
   }
