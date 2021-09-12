@@ -13,6 +13,7 @@ import { IUserInfo } from './models/iuser-info';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { MailService } from '../mail/mail.service';
 import buildAvatarUrl from '../helpers/build-avatar-url';
+import { generateCode } from '../helpers/generators';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +35,7 @@ export class AuthService {
     const userData: Prisma.UserCreateInput = {
       email,
       password: passwordHash,
-      verificationCode: Math.floor(100000 + Math.random() * 900000),
+      verificationCode: generateCode(),
     };
 
     const { user } = await this.userService.createConsumer(userData);
@@ -44,7 +45,7 @@ export class AuthService {
       user.verificationCode,
     );
 
-    return await this.getUserInfo(user, false);
+    return this.getUserInfo(user, false);
   }
 
   async login(login: LoginDto): Promise<IUserInfo | null> {
@@ -64,7 +65,7 @@ export class AuthService {
       });
     }
 
-    return await this.getUserInfo(user);
+    return this.getUserInfo(user);
   }
 
   async verifyUser(sub: string, verifyDto: VerifyDto): Promise<IUserInfo> {
@@ -85,7 +86,7 @@ export class AuthService {
     };
 
     const updatedUser = await this.userService.update(sub, updates);
-    return await this.getUserInfo(updatedUser);
+    return this.getUserInfo(updatedUser);
   }
 
   async updateProfile(sub: string, profile: ProfileDto): Promise<IUserInfo> {
@@ -101,7 +102,7 @@ export class AuthService {
 
     const userProfile: Prisma.UserUpdateInput = profile;
     const updatedUser = await this.userService.update(sub, userProfile);
-    return await this.getUserInfo(updatedUser);
+    return this.getUserInfo(updatedUser);
   }
 
   async changePassword(
@@ -130,7 +131,7 @@ export class AuthService {
     };
 
     const updatedUser = await this.userService.update(sub, updates);
-    return await this.getUserInfo(updatedUser);
+    return this.getUserInfo(updatedUser);
   }
 
   async updateAvatar(sub: string, fileName: string): Promise<IUserInfo> {
@@ -145,7 +146,7 @@ export class AuthService {
     };
 
     const updatedUser = await this.userService.update(sub, userProfile);
-    return await this.getUserInfo(updatedUser);
+    return this.getUserInfo(updatedUser);
   }
 
   async verifyUserName(id: string, userName: string) {
@@ -164,18 +165,15 @@ export class AuthService {
     const foundUser = await this.userService.findByEmail(email);
 
     if (foundUser) {
-      return await this.getUserInfo(foundUser);
+      return this.getUserInfo(foundUser);
     }
 
     const { user } = await this.userService.createConsumer(socialProfileDTO);
 
-    return await this.getUserInfo(user, false);
+    return this.getUserInfo(user, false);
   }
 
-  async getUserInfo(
-    user: User,
-    shouldBuildAvatarUrl = true,
-  ): Promise<IUserInfo> {
+  getUserInfo(user: User, shouldBuildAvatarUrl = true): IUserInfo {
     const {
       id,
       email,
@@ -189,12 +187,12 @@ export class AuthService {
     } = user;
 
     const payload = { email, sub: user.id };
-    const accessToken = await this.jwtService.signAsync(payload);
+    const accessToken = this.jwtService.sign(payload);
 
     return {
       sub: id,
       email,
-      userName: userName || (await this.createUserName(user)),
+      userName,
       name,
       lastName,
       avatar: shouldBuildAvatarUrl ? buildAvatarUrl(avatar) : avatar,
@@ -213,43 +211,5 @@ export class AuthService {
         email: 'This email is currently in use.',
       });
     }
-  }
-
-  private async createUserName(user: User): Promise<string> {
-    const { email } = user;
-    let userName = email.split('@')[0];
-
-    const foundUsers = await this.userService.findUsersContainingUserName(
-      userName,
-    );
-
-    const isAlreadyUsed =
-      foundUsers.length &&
-      foundUsers.some((user) => user.userName === userName);
-
-    if (isAlreadyUsed) {
-      userName = this.generateUserName(foundUsers, user);
-    }
-
-    return userName;
-  }
-
-  private generateUserName(users: User[], user: User): string {
-    const { email, name, lastName } = user;
-    let newUserName = `${name
-      .split(' ')
-      .join('')
-      .toLocaleLowerCase()}${lastName.split(' ').join('').toLocaleLowerCase()}`;
-
-    if (users.some((user) => user.userName === newUserName)) {
-      let i = 1;
-      newUserName = `${email}${i}`;
-      while (users.some((user) => user.userName === newUserName)) {
-        i++;
-        newUserName = `${email}${i}`;
-      }
-    }
-
-    return newUserName;
   }
 }

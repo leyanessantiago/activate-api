@@ -12,6 +12,7 @@ import { UserDTO } from './models/user.dto';
 import getStatus from './utils/get-status';
 import buildPublisherDto from './utils/build-publisher-dto';
 import buildAvatarUrl from '../helpers/build-avatar-url';
+import { generateCode } from '../helpers/generators';
 
 @Injectable()
 export class UserService {
@@ -642,14 +643,6 @@ export class UserService {
     return this.prismaService.user.findUnique({
       where: {
         userName,
-      },
-    });
-  }
-
-  async findUsersContainingUserName(userName: string): Promise<User[]> {
-    return this.prismaService.user.findMany({
-      where: {
-        userName: { contains: userName },
       },
     });
   }
@@ -1733,7 +1726,10 @@ export class UserService {
 
   async createConsumer(userData: Prisma.UserCreateInput) {
     const user = await this.prismaService.user.create({
-      data: userData,
+      data: {
+        ...userData,
+        userName: await this.generateUserName(userData),
+      },
     });
 
     return await this.prismaService.consumer.create({
@@ -1753,5 +1749,28 @@ export class UserService {
         id: id,
       },
     });
+  }
+
+  private async generateUserName(
+    user: Prisma.UserCreateInput,
+  ): Promise<string> {
+    const { email, name, lastName } = user;
+    let newUserName = email.split('@')[0];
+    let foundUser = await this.findByUserName(newUserName);
+
+    if (!foundUser) {
+      return newUserName;
+    }
+
+    const fullName = `${name}${lastName}`;
+    newUserName = fullName.replace(/ /g, '').toLocaleLowerCase();
+    foundUser = await this.findByUserName(newUserName);
+
+    while (foundUser) {
+      newUserName = `${email}${generateCode()}`;
+      foundUser = await this.findByUserName(newUserName);
+    }
+
+    return newUserName;
   }
 }
