@@ -475,14 +475,14 @@ export class EventService {
       where: {
         OR: [
           { name: { contains: term, mode: 'insensitive' } },
-          { address: { contains: term, mode: 'insensitive' } },
-          {
-            author: {
-              user: {
-                name: { contains: term, mode: 'insensitive' },
-              },
-            },
-          },
+          // { address: { contains: term, mode: 'insensitive' } },
+          // {
+          //   author: {
+          //     user: {
+          //       name: { contains: term, mode: 'insensitive' },
+          //     },
+          //   },
+          // },
         ],
       },
       select: {
