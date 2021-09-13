@@ -13,6 +13,7 @@ import { IUserInfo } from './models/iuser-info';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { MailService } from '../mail/mail.service';
 import buildAvatarUrl from '../helpers/build-avatar-url';
+import { generateCode } from '../helpers/generators';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +35,7 @@ export class AuthService {
     const userData: Prisma.UserCreateInput = {
       email,
       password: passwordHash,
-      verificationCode: Math.floor(100000 + Math.random() * 900000),
+      verificationCode: generateCode(),
     };
 
     const { user } = await this.userService.createConsumer(userData);

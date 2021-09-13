@@ -8,7 +8,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { MulterModule } from '@nestjs/platform-express';
 import { MailModule } from '../mail/mail.module';
-import { GoogleStrategy } from '../core/social_auth/google.startegy';
+import { GoogleStrategy } from './social_auth/google.startegy';
+import { FacebookStrategy } from './social_auth/facebook.startegy';
 
 @Module({
   imports: [
@@ -24,7 +25,13 @@ import { GoogleStrategy } from '../core/social_auth/google.startegy';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserService, PrismaService, GoogleStrategy],
+  providers: [
+    AuthService,
+    UserService,
+    PrismaService,
+    GoogleStrategy,
+    FacebookStrategy,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}
