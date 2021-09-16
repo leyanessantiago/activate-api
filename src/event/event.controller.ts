@@ -10,8 +10,14 @@ import { PagedResponse } from '../core/responses/paged-response';
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
+  @Public()
+  @Get('top')
+  async getTopEvents(): Promise<EventDTO[]> {
+    return this.eventService.findTopEvents();
+  }
+
   @Get('upcoming')
-  getCurrentUserUpcomingEvents(
+  async getCurrentUserUpcomingEvents(
     @CurrentUser() user: IUserInfo,
     @Query('page') page: number,
     @Query('limit') limit: number,
@@ -24,7 +30,7 @@ export class EventController {
   }
 
   @Get('upcoming/dates')
-  getDatesOfCurrentUserUpcomingEvents(
+  async getDatesOfCurrentUserUpcomingEvents(
     @CurrentUser() user: IUserInfo,
     @Query('page') page: number,
     @Query('limit') limit: number,

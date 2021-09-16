@@ -20,6 +20,26 @@ export interface UpcomingEventsQueryParams extends QueryParams {
 export class EventService {
   constructor(private readonly prismaService: PrismaService) {}
 
+  async findTopEvents(): Promise<EventDTO[]> {
+    const events = await this.prismaService.event.findMany({
+      take: 7,
+      orderBy: {
+        followers: {
+          _count: 'desc',
+        },
+      },
+      select: {
+        id: true,
+        image: true,
+      },
+    });
+
+    return events.map(({ id, image }) => ({
+      id,
+      image: buildImageUrl(`events/image/${image}`),
+    }));
+  }
+
   async findMyUpcomingEvents(
     currentUserId: string,
     queryParams: UpcomingEventsQueryParams,
