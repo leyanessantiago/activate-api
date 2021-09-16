@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { endOfDay, startOfDay } from 'date-fns';
+import { startOfDay } from 'date-fns';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApiException } from '../core/exceptions/api-exception';
 import { RelationshipStatus } from '../constants/user';
@@ -20,27 +20,34 @@ export interface UpcomingEventsQueryParams extends QueryParams {
 export class EventService {
   constructor(private readonly prismaService: PrismaService) {}
 
+  async findTopEvents(): Promise<EventDTO[]> {
+    const events = await this.prismaService.event.findMany({
+      take: 7,
+      orderBy: {
+        followers: {
+          _count: 'desc',
+        },
+      },
+      select: {
+        id: true,
+        image: true,
+      },
+    });
+
+    return events.map(({ id, image }) => ({
+      id,
+      image: buildImageUrl(`events/image/${image}`),
+    }));
+  }
+
   async findMyUpcomingEvents(
     currentUserId: string,
     queryParams: UpcomingEventsQueryParams,
   ): Promise<PagedResponse<EventDTO>> {
-    const { limit, page, date } = queryParams;
+    const { limit, page } = queryParams;
 
     const where = {
       followers: { some: { consumerId: currentUserId } },
-      AND: [
-        {
-          date: {
-            gte: new Date(),
-          },
-        },
-        {
-          date: {
-            gte: startOfDay(new Date(date)),
-            lte: endOfDay(new Date(date)),
-          },
-        },
-      ],
     };
 
     const upcomingEvents = await this.prismaService.event.findMany({
@@ -473,17 +480,7 @@ export class EventService {
   async searchEvents(term: string, user: string): Promise<EventDTO[]> {
     const events = await this.prismaService.event.findMany({
       where: {
-        OR: [
-          { name: { contains: term, mode: 'insensitive' } },
-          { address: { contains: term, mode: 'insensitive' } },
-          {
-            author: {
-              user: {
-                name: { contains: term, mode: 'insensitive' },
-              },
-            },
-          },
-        ],
+        name: { contains: term, mode: 'insensitive' },
       },
       select: {
         id: true,

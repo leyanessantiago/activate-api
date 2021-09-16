@@ -1,12 +1,12 @@
 export interface EventDTO {
   id: string;
-  name: string;
-  date: Date;
   image: string;
-  address: string;
+  name?: string;
+  date?: Date;
+  address?: string;
   description?: string;
   comments?: Comment[];
-  author: {
+  author?: {
     id: string;
     name: string;
     userName?: string;
@@ -17,7 +17,7 @@ export interface EventDTO {
     avatar: string;
   }[];
   followersCount?: number;
-  going: boolean;
+  going?: boolean;
 }
 
 interface Comment {

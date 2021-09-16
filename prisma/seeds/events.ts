@@ -30,10 +30,15 @@ function generateComments(eventDate: string | Date, users: Consumer[]) {
 }
 
 const images: string[] = [
-  'baking-event.jpeg',
-  'comedy-show.jpeg',
-  'feminist-event.jpeg',
-  'virtual-tour.jpeg',
+  '1fd9e63c7cdf9a09c2c9fc7c31a1682b.jpg',
+  '41d0c6da9c54c656991f2da4bb88ca57.jpg',
+  '2313c6c31959bf1564d1d097b2ab67e5.jpg',
+  'b87b7e466d5e80add314c500ffda92ee.jpg',
+  'c1319ac73aa26148197f3967ad65a746.jpg',
+  '23e1ca18852cc8964175e89ca187d633.jpg',
+  '008d91e90a5311c10ee2b84c10988374.jpg',
+  '69a7ccf39060bc28cfa5b0becf342fcd.jpg',
+  '91f6fcba1bb15027915fa779e94f4457.jpg',
 ];
 
 export default async function seedEvents(prisma: PrismaClient) {
