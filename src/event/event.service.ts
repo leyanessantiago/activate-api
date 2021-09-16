@@ -480,17 +480,7 @@ export class EventService {
   async searchEvents(term: string, user: string): Promise<EventDTO[]> {
     const events = await this.prismaService.event.findMany({
       where: {
-        OR: [
-          { name: { contains: term, mode: 'insensitive' } },
-          // { address: { contains: term, mode: 'insensitive' } },
-          // {
-          //   author: {
-          //     user: {
-          //       name: { contains: term, mode: 'insensitive' },
-          //     },
-          //   },
-          // },
-        ],
+        name: { contains: term, mode: 'insensitive' },
       },
       select: {
         id: true,
