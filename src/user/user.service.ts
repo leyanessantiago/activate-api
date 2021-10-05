@@ -426,7 +426,7 @@ export class UserService {
   }
 
   async findFriendsOf(
-    consumerId: string,
+    consumerUId: string,
     currentUser: string,
     queryParams: QueryParams,
   ): Promise<PagedResponse<ConsumerDTO>> {
@@ -434,22 +434,25 @@ export class UserService {
     const usersToAvoid = await this.findMyUsersToAvoid(currentUser);
     const ids = usersToAvoid.map((user) => user.id);
     ids.push(currentUser);
+
+    const consumer = await this.prismaService.consumer.findFirst({
+      where: {
+        OR: [{ userId: consumerUId }, { user: { userName: consumerUId } }],
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    const consumerId = consumer.userId;
     const filters = {
       OR: [
         {
           userAId: consumerId,
-          // OR: [
-          //   { userAId: consumerId },
-          //   { userA: { user: { userName: consumerId } } },
-          // ],
           userBId: { notIn: ids },
         },
         {
           userBId: consumerId,
-          // OR: [
-          //   { userBId: consumerId },
-          //   { userB: { user: { userName: consumerId } } },
-          // ],
           userAId: { notIn: ids },
         },
       ],
@@ -542,11 +545,11 @@ export class UserService {
     });
 
     const results = friends.map((relation) => {
-      const consumer =
+      const friend =
         (consumerId === relation.userAId && relation.userB) ||
         (consumerId === relation.userBId && relation.userA);
 
-      const { user, relatives, relatedTo } = consumer;
+      const { user, relatives, relatedTo } = friend;
       const userRelation =
         (relatives?.length > 0 && relatives[0]) ||
         (relatedTo?.length > 0 && relatedTo[0]);
