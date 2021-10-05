@@ -305,7 +305,10 @@ export class EventService {
   ): Promise<EventDTO[]> {
     const events = await this.prismaService.event.findMany({
       where: {
-        authorId: publisher,
+        OR: [
+          { authorId: publisher },
+          { author: { user: { userName: publisher } } },
+        ],
       },
       select: {
         id: true,
@@ -394,7 +397,10 @@ export class EventService {
       where: {
         followers: {
           some: {
-            consumerId: consumer,
+            OR: [
+              { consumerId: consumer },
+              { consumer: { user: { userName: consumer } } },
+            ],
           },
         },
       },

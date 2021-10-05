@@ -366,7 +366,10 @@ export class UserService {
     const publishersToAvoid = await this.findMyPublishersToAvoid(currentUser);
     const ids = publishersToAvoid.map((p) => p.id);
     const filters = {
-      consumerId: userId,
+      OR: [
+        { consumerId: userId },
+        { consumer: { user: { userName: userId } } },
+      ],
       publisherId: { notIn: ids },
     };
 
@@ -435,10 +438,18 @@ export class UserService {
       OR: [
         {
           userAId: consumerId,
+          // OR: [
+          //   { userAId: consumerId },
+          //   { userA: { user: { userName: consumerId } } },
+          // ],
           userBId: { notIn: ids },
         },
         {
           userBId: consumerId,
+          // OR: [
+          //   { userBId: consumerId },
+          //   { userB: { user: { userName: consumerId } } },
+          // ],
           userAId: { notIn: ids },
         },
       ],
@@ -537,8 +548,8 @@ export class UserService {
 
       const { user, relatives, relatedTo } = consumer;
       const userRelation =
-        (relatives.length > 0 && relatives[0]) ||
-        (relatedTo.length > 0 && relatedTo[0]);
+        (relatives?.length > 0 && relatives[0]) ||
+        (relatedTo?.length > 0 && relatedTo[0]);
       const status = getStatus(userRelation as Relationship, currentUser);
 
       return {
@@ -560,7 +571,10 @@ export class UserService {
     const usersToAvoid = await this.findMyUsersToAvoid(currentUser);
     const ids = usersToAvoid.map((user) => user.id);
     const filters = {
-      publisherId: publisher,
+      OR: [
+        { publisherId: publisher },
+        { publisher: { user: { userName: publisher } } },
+      ],
       consumerId: {
         not: currentUser,
         notIn: ids,
@@ -660,9 +674,9 @@ export class UserService {
     id: string,
     currentUser: string,
   ): Promise<PublisherDTO> {
-    const publisher = await this.prismaService.publisher.findUnique({
+    const publisher = await this.prismaService.publisher.findFirst({
       where: {
-        userId: id,
+        OR: [{ userId: id }, { user: { userName: id } }],
       },
       select: {
         user: {
@@ -707,9 +721,9 @@ export class UserService {
     id: string,
     currentUser: string,
   ): Promise<ConsumerDTO> {
-    const consumer = await this.prismaService.consumer.findUnique({
+    const consumer = await this.prismaService.consumer.findFirst({
       where: {
-        userId: id,
+        OR: [{ userId: id }, { user: { userName: id } }],
       },
       select: {
         userId: true,

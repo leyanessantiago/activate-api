@@ -5,7 +5,7 @@ import { VerificationLevel } from '../../src/constants/user';
 
 const loginUser = {
   name: 'Alejandro Yanes',
-  userName: 'alejandro.yanes94',
+  userName: 'alejandroYanes94',
   password: bcrypt.hashSync('Aa12345!!', 10),
   email: 'ale@gmail.com',
   avatar: 'user4',
