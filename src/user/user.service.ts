@@ -1781,19 +1781,26 @@ export class UserService {
     user: Prisma.UserCreateInput,
   ): Promise<string> {
     const { email, name, lastName } = user;
-    let newUserName = email.split('@')[0];
+    const stripRegex = /\W|_/g;
+    const emailUserName = email
+      .toLowerCase()
+      .split('@')[0]
+      .replace(stripRegex, '');
+    let newUserName = emailUserName;
     let foundUser = await this.findByUserName(newUserName);
 
     if (!foundUser) {
       return newUserName;
     }
 
-    const fullName = `${name}${lastName}`;
-    newUserName = fullName.replace(/ /g, '').toLocaleLowerCase();
-    foundUser = await this.findByUserName(newUserName);
+    if (name && lastName) {
+      const fullName = `${name}${lastName}`;
+      newUserName = fullName.toLowerCase().replace(stripRegex, '');
+      foundUser = await this.findByUserName(newUserName);
+    }
 
     while (foundUser) {
-      newUserName = `${email}${generateCode()}`;
+      newUserName = `${emailUserName}${generateCode()}`;
       foundUser = await this.findByUserName(newUserName);
     }
 

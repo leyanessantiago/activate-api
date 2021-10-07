@@ -5,7 +5,7 @@ import { VerificationLevel } from '../../src/constants/user';
 
 const loginUser = {
   name: 'Alejandro Yanes',
-  userName: 'alejandroYanes94',
+  userName: 'alejandroyanes94',
   password: bcrypt.hashSync('Aa12345!!', 10),
   email: 'ale@gmail.com',
   avatar: 'user4',
@@ -24,7 +24,8 @@ export default async function seedUsers(prisma: PrismaClient) {
     const lastName = faker.name.lastName(gender as any);
     const userName = faker.internet
       .userName(firstName, lastName)
-      .toLocaleLowerCase();
+      .toLowerCase()
+      .replace(/\W|_/g, '');
     const avatar =
       gender === 'female'
         ? faker.random.arrayElement(['user1', 'user2'])
@@ -36,9 +37,10 @@ export default async function seedUsers(prisma: PrismaClient) {
     return {
       avatar,
       userName,
-      name: `${firstName} ${lastName}`,
+      name: firstName,
+      lastName,
       password: passwordHash,
-      email: faker.internet.email(firstName, lastName, 'gmail.com'),
+      email: `${userName.toLowerCase()}gmail.com`,
       verificationLevel: VerificationLevel.INTERESTS_ADDED,
       verificationCode: faker.datatype.number({ min: 100000, max: 999999 }),
     } as User;

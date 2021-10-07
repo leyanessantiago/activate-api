@@ -14,6 +14,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { MailService } from '../mail/mail.service';
 import buildAvatarUrl from '../helpers/build-avatar-url';
 import { generateCode } from '../helpers/generators';
+import { userNameRegex } from '../constants/regex-collection';
 
 @Injectable()
 export class AuthService {
@@ -45,7 +46,7 @@ export class AuthService {
       user.verificationCode,
     );
 
-    return this.getUserInfo(user, false);
+    return this.getUserInfo(user);
   }
 
   async login(login: LoginDto): Promise<IUserInfo | null> {
@@ -150,6 +151,12 @@ export class AuthService {
   }
 
   async verifyUserName(id: string, userName: string) {
+    if (!userNameRegex.test(userName)) {
+      throw new ValidationException({
+        userName: 'The username does not meet the requirements',
+      });
+    }
+
     const userByUserName = await this.userService.findByUserName(userName);
 
     if (!!userByUserName && id !== userByUserName.id) {
