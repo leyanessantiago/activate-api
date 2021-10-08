@@ -5,6 +5,6 @@ export const urlRegex = /^(?:(?:https?|ftp):\/\/)?(?:(?!(?:10|127)(?:\.\d{1,3}){
 // simpler password regex to accept Google suggestions
 export const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,16}$/m;
 
-export const userNameRegex = /^[a-z]{2}[a-z0-9]{2,26}$/m;
+export const userNameRegex = /^[a-z]{2}[a-z0-9]{2,14}$/m;
 // instagram style names
 // export const userNameRegex = /^[a-z](?!.*?_{2})(?!.*?\.{2})[a-z0-9._]{1,28}[a-z0-9]$/m;
