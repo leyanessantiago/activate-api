@@ -8,7 +8,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["selectRelationCount", "orderbyRelation"]
+  previewFeatures = ["selectRelationCount", "orderbyRelation", "fullTextSearch"]
 }
 
 model User {

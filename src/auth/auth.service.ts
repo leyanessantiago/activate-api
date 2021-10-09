@@ -45,7 +45,7 @@ export class AuthService {
       user.verificationCode,
     );
 
-    return this.getUserInfo(user, false);
+    return this.getUserInfo(user);
   }
 
   async login(login: LoginDto): Promise<IUserInfo | null> {

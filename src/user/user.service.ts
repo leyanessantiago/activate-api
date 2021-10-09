@@ -366,7 +366,10 @@ export class UserService {
     const publishersToAvoid = await this.findMyPublishersToAvoid(currentUser);
     const ids = publishersToAvoid.map((p) => p.id);
     const filters = {
-      consumerId: userId,
+      OR: [
+        { consumerId: userId },
+        { consumer: { user: { userName: userId } } },
+      ],
       publisherId: { notIn: ids },
     };
 
@@ -423,7 +426,7 @@ export class UserService {
   }
 
   async findFriendsOf(
-    consumerId: string,
+    consumerUId: string,
     currentUser: string,
     queryParams: QueryParams,
   ): Promise<PagedResponse<ConsumerDTO>> {
@@ -431,6 +434,17 @@ export class UserService {
     const usersToAvoid = await this.findMyUsersToAvoid(currentUser);
     const ids = usersToAvoid.map((user) => user.id);
     ids.push(currentUser);
+
+    const consumer = await this.prismaService.consumer.findFirst({
+      where: {
+        OR: [{ userId: consumerUId }, { user: { userName: consumerUId } }],
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    const consumerId = consumer.userId;
     const filters = {
       OR: [
         {
@@ -531,14 +545,14 @@ export class UserService {
     });
 
     const results = friends.map((relation) => {
-      const consumer =
+      const friend =
         (consumerId === relation.userAId && relation.userB) ||
         (consumerId === relation.userBId && relation.userA);
 
-      const { user, relatives, relatedTo } = consumer;
+      const { user, relatives, relatedTo } = friend;
       const userRelation =
-        (relatives.length > 0 && relatives[0]) ||
-        (relatedTo.length > 0 && relatedTo[0]);
+        (relatives?.length > 0 && relatives[0]) ||
+        (relatedTo?.length > 0 && relatedTo[0]);
       const status = getStatus(userRelation as Relationship, currentUser);
 
       return {
@@ -560,7 +574,10 @@ export class UserService {
     const usersToAvoid = await this.findMyUsersToAvoid(currentUser);
     const ids = usersToAvoid.map((user) => user.id);
     const filters = {
-      publisherId: publisher,
+      OR: [
+        { publisherId: publisher },
+        { publisher: { user: { userName: publisher } } },
+      ],
       consumerId: {
         not: currentUser,
         notIn: ids,
@@ -660,9 +677,9 @@ export class UserService {
     id: string,
     currentUser: string,
   ): Promise<PublisherDTO> {
-    const publisher = await this.prismaService.publisher.findUnique({
+    const publisher = await this.prismaService.publisher.findFirst({
       where: {
-        userId: id,
+        OR: [{ userId: id }, { user: { userName: id } }],
       },
       select: {
         user: {
@@ -707,9 +724,9 @@ export class UserService {
     id: string,
     currentUser: string,
   ): Promise<ConsumerDTO> {
-    const consumer = await this.prismaService.consumer.findUnique({
+    const consumer = await this.prismaService.consumer.findFirst({
       where: {
-        userId: id,
+        OR: [{ userId: id }, { user: { userName: id } }],
       },
       select: {
         userId: true,
@@ -1764,19 +1781,26 @@ export class UserService {
     user: Prisma.UserCreateInput,
   ): Promise<string> {
     const { email, name, lastName } = user;
-    let newUserName = email.split('@')[0];
+    const stripRegex = /\W|_/g;
+    const emailUserName = email
+      .toLowerCase()
+      .split('@')[0]
+      .replace(stripRegex, '');
+    let newUserName = emailUserName;
     let foundUser = await this.findByUserName(newUserName);
 
     if (!foundUser) {
       return newUserName;
     }
 
-    const fullName = `${name}${lastName}`;
-    newUserName = fullName.replace(/ /g, '').toLocaleLowerCase();
-    foundUser = await this.findByUserName(newUserName);
+    if (name && lastName) {
+      const fullName = `${name}${lastName}`;
+      newUserName = fullName.toLowerCase().replace(stripRegex, '');
+      foundUser = await this.findByUserName(newUserName);
+    }
 
     while (foundUser) {
-      newUserName = `${email}${generateCode()}`;
+      newUserName = `${emailUserName}${generateCode()}`;
       foundUser = await this.findByUserName(newUserName);
     }
 

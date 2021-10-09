@@ -8,11 +8,8 @@ export default async function seedPublishers(prisma: PrismaClient) {
 
   const users = new Array(15).fill(1).map(() => {
     const gender = faker.random.arrayElement(['male', 'female']);
-    const firstName = faker.name.firstName(gender as any);
-    const lastName = faker.name.lastName(gender as any);
-    const userName = faker.internet
-      .userName(firstName, lastName)
-      .toLocaleLowerCase();
+    const name = faker.company.companyName(0);
+    const userName = name.toLowerCase().replace(/\W|_/g, '');
     const avatar =
       gender === 'female'
         ? faker.random.arrayElement(['user1', 'user2'])
@@ -24,9 +21,9 @@ export default async function seedPublishers(prisma: PrismaClient) {
     return {
       avatar,
       userName,
-      name: `${firstName} ${lastName}`,
+      name,
       password: passwordHash,
-      email: faker.internet.email(firstName, lastName, 'gmail.com'),
+      email: `${userName.toLowerCase()}gmail.com`,
       verificationLevel: VerificationLevel.INTERESTS_ADDED,
       verificationCode: faker.datatype.number({ min: 100000, max: 999999 }),
     } as User;

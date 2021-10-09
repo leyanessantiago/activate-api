@@ -1,4 +1,13 @@
-import { IsEmail, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Matches,
+} from 'class-validator';
+import { userNameValidation } from '../../constants/validation-rules';
+
+const { regex, message } = userNameValidation;
 
 export class ProfileDto {
   @IsString()
@@ -11,6 +20,7 @@ export class ProfileDto {
 
   @IsString()
   @IsOptional()
+  @Matches(regex, { message })
   userName: string;
 
   @IsOptional()
