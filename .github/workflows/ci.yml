@@ -43,6 +43,9 @@ jobs:
         DATABASE_URL: postgresql://ci_db_user:ci_db_pass@localhost:5432/ci_db?schema=public
       run: npm ci
 
+    - name: Run migrations
+      run: npm run migrate
+
     - name: Run the lints
       run: npm run lint
 
