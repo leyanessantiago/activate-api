@@ -14,6 +14,10 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { MailService } from '../mail/mail.service';
 import buildAvatarUrl from '../helpers/build-avatar-url';
 import { generateCode } from '../helpers/generators';
+import { VerificationLevel } from '../constants/user';
+import { SendResetPasswordEmailDto } from './dto/send-reset-password-email.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ResendSignupVerifyEmailDto } from './dto/resend-signup-verify-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -32,20 +36,51 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(password, this.salt);
 
+    const verificationCode = generateCode();
+
     const userData: Prisma.UserCreateInput = {
       email,
       password: passwordHash,
-      verificationCode: generateCode(),
+      verificationCode,
     };
 
     const { user } = await this.userService.createConsumer(userData);
 
-    await this.mailService.sendUserVerificationCode(
-      user.email,
-      user.verificationCode,
+    await this.mailService.sendSignupVerifyEmail(
+      email,
+      user.name,
+      verificationCode,
     );
 
     return this.getUserInfo(user);
+  }
+
+  async updateVerificationCodeByEmail(email: string): Promise<User> {
+    const foundUser = await this.userService.findByEmail(email);
+
+    if (!foundUser) {
+      throw new ValidationException({
+        email: 'This email does not belongs to any account we have registered',
+      });
+    }
+
+    const newVerificationCode = generateCode();
+    const updates: Prisma.UserUpdateInput = {
+      verificationCode: newVerificationCode,
+    };
+
+    return this.userService.update(foundUser.id, updates);
+  }
+
+  async resendSignupVerifyEmail(
+    sendSignupVerifyEmailDto: ResendSignupVerifyEmailDto,
+  ): Promise<void> {
+    const { email } = sendSignupVerifyEmailDto;
+    const { name, verificationCode } = await this.updateVerificationCodeByEmail(
+      email,
+    );
+
+    await this.mailService.sendSignupVerifyEmail(email, name, verificationCode);
   }
 
   async login(login: LoginDto): Promise<IUserInfo | null> {
@@ -82,7 +117,7 @@ export class AuthService {
     }
 
     const updates: Prisma.UserUpdateInput = {
-      verificationLevel: 1,
+      verificationLevel: VerificationLevel.CODE_VERIFIED,
     };
 
     const updatedUser = await this.userService.update(sub, updates);
@@ -165,12 +200,52 @@ export class AuthService {
     const foundUser = await this.userService.findByEmail(email);
 
     if (foundUser) {
-      return this.getUserInfo(foundUser);
+      const shouldBuildAvatarUrl =
+        foundUser.verificationLevel >= VerificationLevel.USER_INFO_ADDED;
+      return this.getUserInfo(foundUser, shouldBuildAvatarUrl);
     }
 
     const { user } = await this.userService.createConsumer(socialProfileDTO);
 
     return this.getUserInfo(user, false);
+  }
+
+  async sendResetPasswordEmail(
+    sendResetPasswordEmailDto: SendResetPasswordEmailDto,
+  ): Promise<void> {
+    const { email } = sendResetPasswordEmailDto;
+    const { verificationCode } = await this.updateVerificationCodeByEmail(
+      email,
+    );
+
+    await this.mailService.sendPasswordResetEmail(email, verificationCode);
+  }
+
+  async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<IUserInfo> {
+    const { email, verificationCode, newPassword } = resetPasswordDto;
+
+    const foundUser = await this.userService.findByEmail(email);
+
+    if (!foundUser) {
+      throw new ValidationException({
+        email: 'This email does not belongs to any account we have registered',
+      });
+    }
+
+    if (foundUser.verificationCode !== verificationCode) {
+      throw new ValidationException({
+        code: 'This is not the code we sent you',
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, this.salt);
+
+    const updates: Prisma.UserUpdateInput = {
+      password: passwordHash,
+    };
+
+    const updatedUser = await this.userService.update(foundUser.id, updates);
+    return this.getUserInfo(updatedUser);
   }
 
   getUserInfo(user: User, shouldBuildAvatarUrl = true): IUserInfo {

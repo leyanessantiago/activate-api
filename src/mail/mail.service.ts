@@ -1,19 +1,34 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-import { IUserInfo } from '../auth/models/iuser-info';
 
 @Injectable()
 export class MailService {
   constructor(private mailerService: MailerService) {}
 
-  async sendUserVerificationCode(
+  async sendSignupVerifyEmail(
     email: string,
+    name: string,
     verificationCode: number,
   ): Promise<void> {
     await this.mailerService.sendMail({
       to: email,
       subject: 'Welcome to Activate',
-      template: './verification_code',
+      template: './signup_verify_email',
+      context: {
+        name,
+        verificationCode,
+      },
+    });
+  }
+
+  async sendPasswordResetEmail(
+    email: string,
+    verificationCode: number,
+  ): Promise<void> {
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Your verification code',
+      template: './password_reset_email',
       context: {
         verificationCode,
       },

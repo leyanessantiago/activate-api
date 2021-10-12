@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { AuthGuard } from '@nestjs/passport';
 import { imageFilter, renameImageFile } from '../helpers/file-upload';
 import { Public } from '../core/jwt/public.decorator';
 import { CurrentUser } from '../core/jwt/current-user.decorator';
@@ -25,7 +26,9 @@ import { AuthService } from './auth.service';
 import { ProfileDto } from './dto/profile.dto';
 import { IUserInfo } from './models/iuser-info';
 import { ChangePasswordDto } from './dto/change-password.dto';
-import { AuthGuard } from '@nestjs/passport';
+import { SendResetPasswordEmailDto } from './dto/send-reset-password-email.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ResendSignupVerifyEmailDto } from './dto/resend-signup-verify-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -44,6 +47,14 @@ export class AuthController {
       HttpStatus.BAD_REQUEST,
       'Error creating the account, please try later.',
     );
+  }
+
+  @Post('signup/resend-verify-email')
+  @Public()
+  async resendSignupVerifyEmail(
+    @Body() resendSignupVerifyEmailDto: ResendSignupVerifyEmailDto,
+  ): Promise<void> {
+    await this.authService.resendSignupVerifyEmail(resendSignupVerifyEmailDto);
   }
 
   @Post('login')
@@ -100,6 +111,22 @@ export class AuthController {
     @Body() credentials: ChangePasswordDto,
   ): Promise<IUserInfo> {
     return this.authService.changePassword(currentUser.sub, credentials);
+  }
+
+  @Post('password/reset/send-email')
+  @Public()
+  async forgotPassword(
+    @Body() forgotPasswordDto: SendResetPasswordEmailDto,
+  ): Promise<void> {
+    await this.authService.sendResetPasswordEmail(forgotPasswordDto);
+  }
+
+  @Patch('password/reset')
+  @Public()
+  async resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<IUserInfo> {
+    return this.authService.resetPassword(resetPasswordDto);
   }
 
   @Patch('avatar')
