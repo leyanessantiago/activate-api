@@ -7,7 +7,6 @@ export class MailService {
 
   async sendSignupVerifyEmail(
     email: string,
-    name: string,
     verificationCode: number,
   ): Promise<void> {
     await this.mailerService.sendMail({
@@ -15,7 +14,6 @@ export class MailService {
       subject: 'Welcome to Activate',
       template: './signup_verify_email',
       context: {
-        name,
         verificationCode,
       },
     });
