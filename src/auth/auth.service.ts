@@ -46,11 +46,7 @@ export class AuthService {
 
     const { user } = await this.userService.createConsumer(userData);
 
-    await this.mailService.sendSignupVerifyEmail(
-      email,
-      user.name,
-      verificationCode,
-    );
+    await this.mailService.sendSignupVerifyEmail(email, verificationCode);
 
     return this.getUserInfo(user);
   }
@@ -76,11 +72,11 @@ export class AuthService {
     sendSignupVerifyEmailDto: ResendSignupVerifyEmailDto,
   ): Promise<void> {
     const { email } = sendSignupVerifyEmailDto;
-    const { name, verificationCode } = await this.updateVerificationCodeByEmail(
+    const { verificationCode } = await this.updateVerificationCodeByEmail(
       email,
     );
 
-    await this.mailService.sendSignupVerifyEmail(email, name, verificationCode);
+    await this.mailService.sendSignupVerifyEmail(email, verificationCode);
   }
 
   async login(login: LoginDto): Promise<IUserInfo | null> {
