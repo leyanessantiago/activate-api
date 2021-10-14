@@ -26,7 +26,8 @@
         "migrate": "npx prisma migrate dev --preview-feature",
         "migrate:deploy": "npx prisma migrate deploy --preview-feature",
         "migrate_seed": "npm run migrate && npm run seed",
-        "migrate_seed:deploy": "npm run migrate:deploy && npm run seed"
+        "migrate_seed:deploy": "npm run migrate:deploy && npm run seed",
+        "db:local:up": "docker-compose -f database/docker-compose.yml up"
     },
     "husky": {
         "hooks": {
