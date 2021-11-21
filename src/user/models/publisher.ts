@@ -1,3 +1,4 @@
+import { Publisher, User } from '.prisma/client';
 import { FollowerStatus } from 'src/constants/user';
 import { UserDTO } from './user.dto';
 
@@ -30,4 +31,8 @@ export interface PublisherQuery {
     followers: number;
     events: number;
   };
+}
+
+export interface ExtendedPublshiser extends Publisher {
+  user: Partial<User>;
 }

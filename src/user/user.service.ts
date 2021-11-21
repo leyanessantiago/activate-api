@@ -7,7 +7,7 @@ import { ApiException } from '../core/exceptions/api-exception';
 import { PagedResponse } from '../core/responses/paged-response';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConsumerDTO } from './models/consumer';
-import { PublisherDTO } from './models/publisher';
+import { ExtendedPublshiser, PublisherDTO } from './models/publisher';
 import { UserDTO } from './models/user.dto';
 import getStatus from './utils/get-status';
 import buildPublisherDto from './utils/build-publisher-dto';
@@ -661,6 +661,21 @@ export class UserService {
     return this.prismaService.user.findUnique({
       where: {
         email,
+      },
+    });
+  }
+
+  async findPublisherByEmail(
+    email: string,
+  ): Promise<ExtendedPublshiser | undefined> {
+    return this.prismaService.publisher.findFirst({
+      where: {
+        user: {
+          email,
+        },
+      },
+      include: {
+        user: true,
       },
     });
   }

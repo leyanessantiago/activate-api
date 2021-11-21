@@ -52,6 +52,12 @@ export class AuthController {
     return this.authService.login(login);
   }
 
+  @Post('login-pub')
+  @Public()
+  async loginPublisher(@Body() login: LoginDto): Promise<IUserInfo> {
+    return this.authService.loginPublisher(login);
+  }
+
   @Get('social/google')
   @Public()
   @UseGuards(AuthGuard('google'))
