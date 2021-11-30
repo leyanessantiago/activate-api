@@ -99,6 +99,29 @@ export class AuthService {
     return this.getUserInfo(user);
   }
 
+  async loginPublisher(login: LoginDto): Promise<IUserInfo | null> {
+    const publisher = await this.userService.findPublisherByEmail(login.email);
+
+    if (!publisher) {
+      throw new ValidationException({
+        email: 'This email does not belongs to any account we have registered',
+      });
+    }
+
+    const isMatch = await bcrypt.compare(
+      login.password,
+      publisher.user.password,
+    );
+
+    if (!isMatch) {
+      throw new ValidationException({
+        password: 'This password does not belongs to this account',
+      });
+    }
+
+    return this.getUserInfo(publisher.user as User);
+  }
+
   async verifyUser(sub: string, verifyDto: VerifyDto): Promise<IUserInfo> {
     const user = await this.userService.findById(sub);
 
