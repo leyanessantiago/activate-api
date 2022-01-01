@@ -40,6 +40,22 @@ export class EventService {
     }));
   }
 
+  async findMyEvents(currentUserId: string): Promise<EventDTO[]> {
+    return this.prismaService.event.findMany({
+      where: {
+        author: {
+          userId: currentUserId,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        date: true,
+        image: true,
+      },
+    });
+  }
+
   async findMyUpcomingEvents(
     currentUserId: string,
     queryParams: UpcomingEventsQueryParams,

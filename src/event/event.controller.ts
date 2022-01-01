@@ -10,6 +10,11 @@ import { PagedResponse } from '../core/responses/paged-response';
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
+  @Get('/by-me')
+  async getMyEvents(@CurrentUser() user: IUserInfo): Promise<EventDTO[]> {
+    return this.eventService.findMyEvents(user.sub);
+  }
+
   @Public()
   @Get('top')
   async getTopEvents(): Promise<EventDTO[]> {
