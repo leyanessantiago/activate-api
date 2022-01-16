@@ -1,24 +1,34 @@
-import { Controller, Get, Param, Res, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Res,
+  Query,
+  Post,
+  Body,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import { EventService, UpcomingEventsQueryParams } from './event.service';
 import { Public } from '../core/jwt/public.decorator';
 import { CurrentUser } from '../core/jwt/current-user.decorator';
 import { IUserInfo } from '../auth/models/iuser-info';
-import { EventDTO } from './models/event';
+import { EventDTO, SimpleEventDTO } from './models/event';
 import { PagedResponse } from '../core/responses/paged-response';
 
 @Controller('events')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
-  @Get('/by-me')
-  async getMyEvents(@CurrentUser() user: IUserInfo): Promise<EventDTO[]> {
-    return this.eventService.findMyEvents(user.sub);
-  }
-
   @Public()
   @Get('top')
   async getTopEvents(): Promise<EventDTO[]> {
     return this.eventService.findTopEvents();
+  }
+
+  @Get('by-me')
+  async getMyEvents(@CurrentUser() user: IUserInfo): Promise<EventDTO[]> {
+    return this.eventService.findMyEvents(user.sub);
   }
 
   @Get('upcoming')
@@ -108,5 +118,30 @@ export class EventController {
   @Get('image/:img')
   getAvatar(@Param('img') eventImg, @Res() res) {
     return res.sendFile(eventImg, { root: './images/events' });
+  }
+
+  @Post('new')
+  async createEvent(
+    @CurrentUser() user: IUserInfo,
+    @Body() event: SimpleEventDTO,
+  ): Promise<EventDTO> {
+    return this.eventService.createEvent(user.sub, event);
+  }
+
+  @Patch(':id/edit')
+  async patchEvent(
+    @CurrentUser() user: IUserInfo,
+    @Param('id') eventId: string,
+    @Body() event: Partial<SimpleEventDTO>,
+  ): Promise<EventDTO> {
+    return this.eventService.patchEvent(user.sub, eventId, event);
+  }
+
+  @Delete(':id')
+  async deleteEvent(
+    @CurrentUser() user: IUserInfo,
+    @Param('id') eventId: string,
+  ): Promise<void> {
+    return this.eventService.deleteEvent(user.sub, eventId);
   }
 }

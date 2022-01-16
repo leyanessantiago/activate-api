@@ -33,3 +33,13 @@ interface Comment {
   createdOn: Date;
   respondedOn: Date;
 }
+
+export interface SimpleEventDTO {
+  category: string;
+  name: string;
+  date: Date;
+  endDate?: Date;
+  isRanged?: boolean;
+  address: string;
+  isOnline?: boolean;
+}

@@ -1,7 +1,6 @@
 import {
   PrismaClient,
   Publisher,
-  Event,
   Comment,
   Consumer,
   Category,
@@ -56,16 +55,26 @@ export default async function seedEvents(prisma: PrismaClient) {
     const image = faker.random.arrayElement(images);
     const authorId = faker.random.arrayElement(publishers).userId;
     const categoryId = faker.random.arrayElement(categories).id;
+    const isRanged = faker.datatype.boolean();
+    const date = faker.date.future();
+    const endDate = isRanged ? faker.date.future(0, date) : undefined;
+    const isOnline = faker.datatype.boolean();
+    const address = isOnline
+      ? faker.internet.url()
+      : faker.address.streetAddress(true);
 
     return {
       image,
       authorId,
       categoryId,
+      date,
+      endDate,
+      isRanged,
+      address,
+      isOnline,
       name: faker.lorem.words(6),
-      address: faker.address.streetAddress(true),
-      date: faker.date.future(),
       description: faker.lorem.lines(8),
-    } as Event;
+    };
   });
 
   for (const event of events) {

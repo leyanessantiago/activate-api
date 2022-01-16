@@ -86,7 +86,10 @@ model Event {
   id            String     @id @default(uuid())
   name          String     @db.VarChar(255)
   date          DateTime
+  endDate       DateTime?
+  isRanged      Boolean   @default(false)
   address       String
+  isOnline      Boolean    @default(false)
   description   String?
   image         String?
   category      Category   @relation(fields: [categoryId], references: [id])

@@ -6,7 +6,7 @@ import { RelationshipStatus } from '../constants/user';
 import buildRelevanceMap from './utils/build-relevance-map';
 import compareEvents from './utils/compare-events';
 import { QueryParams } from '../constants/queries';
-import { EventDTO } from './models/event';
+import { EventDTO, SimpleEventDTO } from './models/event';
 import { PagedResponse } from '../core/responses/paged-response';
 import buildImageUrl from '../helpers/build-image-url';
 import buildAvatarUrl from '../helpers/build-avatar-url';
@@ -584,9 +584,10 @@ export class EventService {
   }
 
   async getById(eventId: string, currentUser: string): Promise<EventDTO> {
-    const event = await this.prismaService.event.findUnique({
+    const event = await this.prismaService.event.findFirst({
       where: {
         id: eventId,
+        author: { userId: currentUser },
       },
       select: {
         id: true,
@@ -680,6 +681,10 @@ export class EventService {
       },
     });
 
+    if (!event) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, 'Event not found');
+    }
+
     return buildEventDto(event, currentUser);
   }
 
@@ -732,6 +737,62 @@ export class EventService {
           eventId: event,
         },
       },
+    });
+  }
+
+  async createEvent(
+    currentUser: string,
+    eventInfo: SimpleEventDTO,
+  ): Promise<EventDTO> {
+    const { category, ...rest } = eventInfo;
+    const event = await this.prismaService.event.create({
+      data: {
+        author: { connect: { userId: currentUser } },
+        category: { connect: { id: category } },
+        ...rest,
+      },
+    });
+    return buildEventDto(event, currentUser);
+  }
+
+  async patchEvent(
+    currentUser: string,
+    eventId: string,
+    eventInfo: Partial<SimpleEventDTO>,
+  ): Promise<EventDTO> {
+    const dbEvent = this.prismaService.event.findFirst({
+      where: { id: eventId, author: { userId: currentUser } },
+    });
+
+    if (!dbEvent) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, 'Event not found');
+    }
+
+    const { category, ...rest } = eventInfo;
+    const data: any = rest;
+
+    if (category) {
+      data.category = { connect: { id: category } };
+    }
+
+    const event = await this.prismaService.event.update({
+      where: { id: eventId },
+      data,
+    });
+    return buildEventDto(event, currentUser);
+  }
+
+  async deleteEvent(currentUser: string, eventId: string): Promise<void> {
+    const event = this.prismaService.event.findFirst({
+      where: { id: eventId, author: { userId: currentUser } },
+    });
+
+    if (!event) {
+      throw new ApiException(HttpStatus.BAD_REQUEST, 'Event not found');
+    }
+
+    this.prismaService.event.delete({
+      where: { id: eventId },
     });
   }
 }

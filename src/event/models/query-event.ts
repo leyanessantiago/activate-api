@@ -19,7 +19,7 @@ export interface QueryEvent {
     createdOn: Date;
     respondedOn: Date;
   }[];
-  author: {
+  author?: {
     user: {
       id: string;
       name: string;
@@ -27,7 +27,7 @@ export interface QueryEvent {
       avatar: string;
     };
   };
-  followers: {
+  followers?: {
     consumer: {
       user: {
         id: string;
