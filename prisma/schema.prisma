@@ -36,6 +36,7 @@ model Publisher {
   user        User       @relation(fields: [userId], references: [id])
   events      Event[]    @relation(name: "EventAuthor")
   followers   Follower[]
+  address     String?
 }
 
 model Follower {
@@ -56,7 +57,7 @@ model Consumer {
   user              User            @relation(fields: [userId], references: [id])
   relatives         Relationship[]  @relation("Relatives")
   relatedTo         Relationship[]  @relation("RelatedTo")
-  eventsFollowing    EventFollower[]
+  eventsFollowing   EventFollower[]
 }
 
 model Relationship {
@@ -86,7 +87,10 @@ model Event {
   id            String     @id @default(uuid())
   name          String     @db.VarChar(255)
   date          DateTime
+  endDate       DateTime?
+  isRanged      Boolean   @default(false)
   address       String
+  isOnline      Boolean    @default(false)
   description   String?
   image         String?
   category      Category   @relation(fields: [categoryId], references: [id])
@@ -140,7 +144,7 @@ model EventFollower {
   consumer       Consumer     @relation(fields: [consumerId], references: [userId])
   consumerId     String
   event          Event @relation(fields: [eventId], references: [id])
-  eventId         String
+  eventId        String
 
   @@id([consumerId, eventId])
 }

@@ -18,6 +18,7 @@ import { VerificationLevel } from '../constants/user';
 import { SendResetPasswordEmailDto } from './dto/send-reset-password-email.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ResendSignupVerifyEmailDto } from './dto/resend-signup-verify-email.dto';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
@@ -27,6 +28,7 @@ export class AuthService {
     private userService: UserService,
     private jwtService: JwtService,
     private mailService: MailService,
+    private prismaService: PrismaService,
   ) {}
 
   async signUp(signUpDTO: SignUpDTO): Promise<IUserInfo | null> {
@@ -267,7 +269,10 @@ export class AuthService {
     return this.getUserInfo(updatedUser);
   }
 
-  getUserInfo(user: User, shouldBuildAvatarUrl = true): IUserInfo {
+  async getUserInfo(
+    user: User,
+    shouldBuildAvatarUrl = true,
+  ): Promise<IUserInfo> {
     const {
       id,
       email,
@@ -280,6 +285,11 @@ export class AuthService {
       verificationLevel,
     } = user;
 
+    const publisher = await this.prismaService.publisher.findUnique({
+      where: { userId: id },
+      select: { address: true },
+    });
+
     const payload = { email, sub: user.id };
     const accessToken = this.jwtService.sign(payload);
 
@@ -290,6 +300,7 @@ export class AuthService {
       name,
       lastName,
       avatar: shouldBuildAvatarUrl ? buildAvatarUrl(avatar) : avatar,
+      address: publisher.address,
       theme,
       useDarkStyle,
       verificationLevel,

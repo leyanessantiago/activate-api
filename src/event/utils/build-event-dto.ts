@@ -19,10 +19,12 @@ export function buildEventDto(event: QueryEvent, user: string): EventDTO {
   return {
     ...rest,
     image: buildImageUrl(`events/image/${image}`),
-    author: {
-      ...author.user,
-      avatar: buildAvatarUrl(author.user.avatar),
-    },
+    author: author
+      ? {
+          ...author.user,
+          avatar: buildAvatarUrl(author.user.avatar),
+        }
+      : undefined,
     friends,
     comments: mappedComments,
     followersCount: _count?.followers,

@@ -5,6 +5,7 @@ export interface IUserInfo {
   lastName?: string;
   userName?: string;
   avatar?: string;
+  address?: string;
   theme?: string;
   useDarkStyle?: boolean;
   verificationLevel: number;
